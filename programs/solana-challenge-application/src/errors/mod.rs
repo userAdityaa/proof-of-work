@@ -16,4 +16,6 @@ pub enum ErrCode {
     InvalidRewardType,
     #[msg("The account is not authorized for this action.")]
     Unauthorized,
+    #[msg("In progress challenge can't be updated in between.")]
+    ChallengeAlreadyOpened,
 }
