@@ -14,4 +14,6 @@ pub enum ErrCode {
     InvalidRewardAmount,
     #[msg("Unknown reward type.")]
     InvalidRewardType,
+    #[msg("The account is not authorized for this action.")]
+    Unauthorized,
 }
