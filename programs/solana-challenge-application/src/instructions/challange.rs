@@ -53,6 +53,10 @@ pub fn create_challenge(
     Ok(())
 }
 
+pub fn delete_challange(ctx: Context<DeleteChallenge>, cid: u64) -> Result<()> {
+    Ok(())
+}
+
 #[derive(Accounts)]
 pub struct CreateChallenge<'info> {
     pub program_state: Account<'info, ProgramState>,
@@ -72,6 +76,27 @@ pub struct CreateChallenge<'info> {
         bump
     )]
     pub challenge: Account<'info, Challenge>,
+
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+#[instruction(cid: u64)]
+pub struct DeleteChallenge<'info> {
+    #[account(mut)]
+    pub creator: Signer<'info>, 
+
+    #[account(
+        mut, 
+        seeds = [
+            b"challenge", 
+            cid.to_le_bytes().as_ref(),
+        ],
+        bump, 
+        close = creator, 
+        constraint = challenge.owner == creator.key() @ ErrCode::Unauthorized,
+    )]  
+    pub challenge: Account<'info, Challenge>, 
 
     pub system_program: Program<'info, System>,
 }

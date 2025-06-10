@@ -35,4 +35,8 @@ pub mod solana_challenge_application {
             reward_mint,
         )
     }
+
+    pub fn delete_challange(ctx: Context<DeleteChallenge>, cid: u64) -> Result<()> {
+        instructions::delete_challange(ctx, cid)
+    }
 }
