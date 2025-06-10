@@ -1,10 +1,12 @@
 use anchor_lang::prelude::*;
 
-pub mod challange;
+pub mod challenge;
+pub mod constants;
+pub mod instructions;
 pub mod states;
 
-use crate::challange::Challange;
-use crate::states::ProgramState;
+use challenge::*;
+use states::*;
 
 declare_id!("3ktaaLhu7U97irLAWRjWWDnSf4rzLgVwQWtijUQ15tFF");
 

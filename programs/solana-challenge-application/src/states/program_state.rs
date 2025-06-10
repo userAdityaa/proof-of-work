@@ -1,11 +1,11 @@
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::pubkey::Pubkey;
 
 #[account]
+#[derive(InitSpace)]
 pub struct ProgramState {
-    initialize: bool,
-    admin: Pubkey,
-    campaign_count: u64,
-    platform_fee: u64,
-    platform_address: Pubkey,
+    pub initialize: bool,
+    pub admin: Pubkey,
+    pub challenge_count: u64,
+    pub platform_fee: u64,
+    pub platform_address: Pubkey,
 }
