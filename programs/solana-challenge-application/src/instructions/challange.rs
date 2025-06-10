@@ -53,7 +53,36 @@ pub fn create_challenge(
     Ok(())
 }
 
-pub fn delete_challange(ctx: Context<DeleteChallenge>, cid: u64) -> Result<()> {
+pub fn delete_challenge(_ctx: Context<DeleteChallenge>, _cid: u64) -> Result<()> {
+    Ok(())
+}
+
+pub fn update_challenge(
+    ctx: Context<UpdateChallenge>,
+    _cid: u64,
+    description: String,
+    image_url: String,
+    location: String,
+    reward_type: u8,
+    reward_amount: u64,
+    reward_mint: Pubkey,
+) -> Result<()> {
+    require!(description.len() <= 256, ErrCode::DescriptionTooLong);
+    require!(image_url.len()    <= 120, ErrCode::ImageUrlTooLong);
+    require!(location.len()     <= 20,  ErrCode::LocationTooLong);
+    require!(reward_amount > 0,          ErrCode::InvalidRewardAmount);
+    require!(reward_type == 0 || reward_type == 1, ErrCode::InvalidRewardType);
+
+    let challenge = &mut ctx.accounts.challenge;
+
+    challenge.description  = description;
+    challenge.image_url    = image_url;
+    challenge.location     = location;
+    challenge.reward_type  = reward_type;
+    challenge.reward_amount= reward_amount;
+    challenge.reward_mint  = reward_mint;
+
+
     Ok(())
 }
 
@@ -97,6 +126,30 @@ pub struct DeleteChallenge<'info> {
         constraint = challenge.owner == creator.key() @ ErrCode::Unauthorized,
     )]  
     pub challenge: Account<'info, Challenge>, 
+
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+#[instruction(cid: u64)]
+pub struct UpdateChallenge<'info> { 
+    #[account(mut)]
+    pub creator: Signer<'info>,
+
+    #[account(
+        mut, 
+        seeds = [
+            b"challenge", 
+            cid.to_le_bytes().as_ref(),
+        ],
+        bump, 
+        constraint = challenge.owner == creator.key() @ ErrCode::Unauthorized, 
+        constraint = challenge.status == 0 @ ErrCode::ChallengeAlreadyOpened,
+        realloc = ANCHOR_DISCRIMINTOR_SIZE + Challenge::INIT_SPACE,
+        realloc::payer = creator,
+        realloc::zero = true,
+    )]
+    pub challenge: Account<'info, Challenge>,
 
     pub system_program: Program<'info, System>,
 }

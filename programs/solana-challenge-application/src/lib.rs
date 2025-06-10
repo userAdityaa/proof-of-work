@@ -36,7 +36,7 @@ pub mod solana_challenge_application {
         )
     }
 
-    pub fn delete_challange(ctx: Context<DeleteChallenge>, cid: u64) -> Result<()> {
-        instructions::delete_challange(ctx, cid)
+    pub fn delete_challenge(ctx: Context<DeleteChallenge>, cid: u64) -> Result<()> {
+        instructions::delete_challenge(ctx, cid)
     }
 }
