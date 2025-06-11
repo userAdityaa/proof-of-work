@@ -18,4 +18,10 @@ pub enum ErrCode {
     Unauthorized,
     #[msg("In progress challenge can't be updated in between.")]
     ChallengeAlreadyOpened,
+    #[msg("The challenge id didn't match.")]
+    InvalidChallengeId,
+    #[msg("Challenge is not open for participation.")]
+    ChallengeNotOpen,
+    #[msg("Maximum participants reached.")]
+    MaxParticipantsReached,
 }
