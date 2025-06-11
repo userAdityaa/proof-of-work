@@ -6,6 +6,7 @@ import GetButton from "@/app/components/GetButton";
 import {getAccount, useOkto } from '@okto_web3/react-sdk'; 
 import Navbar from "./components/Navbar";
 import { Poppins, Pontano_Sans } from "next/font/google";
+import Image from "next/image";
  
 const poppins = Poppins({
   subsets: ['latin'],
@@ -69,24 +70,29 @@ const pontano = Pontano_Sans({
 
 export default function Home() {
   return (
-    <div
-      className="h-screen bg-cover bg-center relative"
-      style={{ backgroundImage: "url('/landing_page.png')" }}
-    >
-      {/* Navbar at the top */}
-      <Navbar />
+    <div className="relative h-screen w-full overflow-hidden">
+      <Image
+        src="/landing_page.png"
+        alt="Landing Page Background"
+        fill 
+        className="object-cover"
+        priority 
+      />
 
-      {/* Centered Hero Text + Subtext + Button */}
-      <div className="absolute top-[42%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
-        <h1 className={`text-[62px] text-[#5B1B63] leading-[80px] font-extrabold ${poppins.className}`}>
-          Complete Real-World Challenges, Earn SOL
-        </h1>
-        <p className={`mt-4 text-[#5B1B63] text-lg md:text-2xl ${pontano.className}`}>
-          Post adventures, set completion periods, and reward participants with SOL.
-        </p>
-        <button className="mt-6 bg-[#FFC949] border-[3px] border-[#420E40] text-black font-medium px-6 py-3 rounded-xl hover:bg-[#FFE07A] transition">
-          Start Now
-        </button>
+      {/* Content on top of the background */}
+      <div className="relative z-10">
+        <Navbar />
+        <div className="absolute top-[220%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
+          <h1 className={`text-[62px] text-[#5B1B63] leading-[80px] font-extrabold ${poppins.className}`}>
+            Complete Real-World Challenges, Earn SOL
+          </h1>
+          <p className={`mt-4 text-[#5B1B63] text-lg md:text-2xl ${pontano.className}`}>
+            Post adventures, set completion periods, and reward participants with SOL.
+          </p>
+          <button className="mt-6 bg-[#FFC949] border-[3px] border-[#420E40] text-black font-medium px-6 py-3 rounded-xl hover:bg-[#FFD866] transition">
+            Start Now
+          </button>
+        </div>
       </div>
     </div>
   );

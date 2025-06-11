@@ -5,7 +5,7 @@ export default function Navbar() {
     <nav className="w-full px-6 py-4 flex items-center justify-between bg-transparent h-[10rem]">
       {/* Logo */}
       <div className="flex items-center">
-        <Image src="/logo.png" alt="Logo" width={250} height={250} />
+        <Image src="/logo.png" alt="Logo" width={250} height={250} priority/>
       </div>
 
       {/* Menu Links + Button */}
