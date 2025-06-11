@@ -24,4 +24,8 @@ pub enum ErrCode {
     ChallengeNotOpen,
     #[msg("Maximum participants reached.")]
     MaxParticipantsReached,
+    #[msg("Username is greater than 15 character.")]
+    UsernameTooLong,
+    #[msg("Avatar url is greater than 100 character.")]
+    AvatarTooLong,
 }
