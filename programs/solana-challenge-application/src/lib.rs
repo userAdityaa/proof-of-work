@@ -5,6 +5,7 @@ pub mod constants;
 pub mod errors;
 pub mod instructions;
 pub mod states;
+pub mod user;
 
 use instructions::*;
 
@@ -13,6 +14,14 @@ declare_id!("3ktaaLhu7U97irLAWRjWWDnSf4rzLgVwQWtijUQ15tFF");
 #[program]
 pub mod solana_challenge_application {
     use super::*;
+
+    pub fn create_user(
+        ctx: Context<CreateUser>,
+        username: String,
+        avatar_url: String,
+    ) -> Result<()> {
+        instructions::create_user(ctx, username, avatar_url)
+    }
 
     pub fn create_challenge(
         ctx: Context<CreateChallenge>,
@@ -62,7 +71,7 @@ pub mod solana_challenge_application {
         )
     }
 
-    pub fn start_challenge(ctx: Context<StartChallenge>, cid: u64) -> Result<()> {
+    pub fn start_challenge(ctx: Context<StartChallange>, cid: u64) -> Result<()> {
         instructions::start_challange(ctx, cid)
     }
 }
