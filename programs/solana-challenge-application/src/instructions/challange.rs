@@ -41,7 +41,7 @@ pub fn create_challenge(
     challenge.reward_mint = reward_mint;
     // 0 = Open, 1 = InProgress, 2 = Completed, 3 = Verified, 4 = Rejected
     challenge.status = 0;
-    challenge.participant = None;
+    challenge.participant = Vec::new();
     challenge.proof_url = None;
     challenge.certified_by = None;
 
@@ -83,6 +83,18 @@ pub fn update_challenge(
     challenge.reward_mint  = reward_mint;
 
 
+    Ok(())
+}
+
+pub fn start_challange(ctx: Context<StartChallange>, cid: u64) -> Result<()> { 
+    let challenge = &mut ctx.accounts.challange; 
+    let challanger=  &mut ctx.accounts.challanger;
+
+    require!(challenge.cid == cid, ErrCode::InvalidChallengeId);
+    require!(challenge.status == 0 || challenge.status == 1, ErrCode:: ChallengeNotOpen);
+    require!(challenge.participant.len() < 20, ErrCode::MaxParticipantsReached);
+
+    challenge.participant.push(challanger.key());
     Ok(())
 }
 
@@ -150,6 +162,26 @@ pub struct UpdateChallenge<'info> {
         realloc::zero = true,
     )]
     pub challenge: Account<'info, Challenge>,
+
+    pub system_program: Program<'info, System>,
+}
+
+
+#[derive(Accounts)]
+#[instruction(cid: u64)]
+pub struct StartChallange<'info> { 
+    #[account(mut)]
+    pub challanger: Signer<'info>, 
+
+    #[account(
+        mut, 
+        seeds = [
+            b"challange", 
+            cid.to_le_bytes().as_ref(),
+        ],
+        bump
+    )]
+    pub challange: Account<'info, Challenge>,
 
     pub system_program: Program<'info, System>,
 }

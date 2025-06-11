@@ -17,7 +17,8 @@ pub struct Challenge {
     pub reward_amount: u64,
     pub reward_mint: Pubkey,
     pub status: u8,
-    pub participant: Option<Pubkey>,
+    #[max_len(20)]
+    pub participant: Vec<Pubkey>,
     #[max_len(120)]
     pub proof_url: Option<String>,
     pub certified_by: Option<Pubkey>,
