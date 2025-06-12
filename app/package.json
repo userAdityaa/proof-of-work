@@ -10,10 +10,12 @@
   },
   "dependencies": {
     "@okto_web3/react-sdk": "^1.1.0",
+    "@solana/web3.js": "^1.98.2",
     "next": "15.3.3",
     "next-auth": "^4.24.11",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "zustand": "^5.0.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
