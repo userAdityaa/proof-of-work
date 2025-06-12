@@ -5,9 +5,9 @@ import type { AuthOptions } from "next-auth";
 export const authOptions: AuthOptions = {
   secret: process.env.AUTH_SECRET, 
   providers: [ 
-    GoogleProvider({ // Configure Google Provider
-      clientId: process.env.GOOGLE_CLIENT_ID!, // From .env
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!, // From .env
+    GoogleProvider({ 
+      clientId: process.env.GOOGLE_CLIENT_ID!, 
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }), 
   ],
   session: {
