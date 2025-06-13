@@ -6,6 +6,12 @@ import { Poppins, Pontano_Sans } from "next/font/google";
 import Image from "next/image";
 import usePhantom from "./hooks/usePhantom";
 
+interface PopoverProps {
+  onClose: () => void,
+  characterIndex: number, 
+  setCharacterIndex: React.Dispatch<React.SetStateAction<number>>;
+};
+
 const poppins = Poppins({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
@@ -37,7 +43,7 @@ const characters = [
 ];
 
 // Popover Component
-const Popover = ({ onClose, characterIndex, setCharacterIndex }) => {
+const Popover = ({ onClose, characterIndex, setCharacterIndex }: PopoverProps) => {
   const character = characters[characterIndex];
   const popoverRef = useRef(null);
 
@@ -50,7 +56,8 @@ const Popover = ({ onClose, characterIndex, setCharacterIndex }) => {
   };
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
+    const handleClickOutside = (event: Event) => {
+      //@ts-ignore
       if (popoverRef.current && !popoverRef.current.contains(event.target)) {
         onClose();
       }
