@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import { Inter} from "next/font/google";
 import "./globals.css";
-import AppProvider from "./providers"; 
-import { getServerSession } from "next-auth";
-import { authOptions } from "./api/auth/[...nextauth]/route";
+import { SolanaProvider } from "@/provider/SolanaProvider";
  
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,11 +18,10 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await getServerSession(authOptions);
   return (
     <html lang="en">
       <body className={inter.className}>
-        <AppProvider session={session}>{children}</AppProvider>
+        <SolanaProvider>{children}</SolanaProvider>
       </body>
     </html>
   );
