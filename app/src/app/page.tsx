@@ -1,155 +1,66 @@
 "use client";
-
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Navbar from "./components/Navbar";
-import { Poppins, Pontano_Sans } from "next/font/google";
+import { poppins, pontano } from "@/constants/Font";
 import Image from "next/image";
-import usePhantom from "./hooks/usePhantom";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { getUser } from "@/app/blockchain";
+import { getProvider } from "@/app/blockchain";
+import { useWalletStore } from "./store/store"
+import { WalletPopover } from "./popovers/Landing/WalletPopover";
+import { AvatarPopover } from './popovers/Landing/AvatarPopover';
 
-interface PopoverProps {
-  onClose: () => void,
-  characterIndex: number, 
-  setCharacterIndex: React.Dispatch<React.SetStateAction<number>>;
-};
-
-const poppins = Poppins({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
-  variable: "--font-poppins",
-});
-
-const pontano = Pontano_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500"],
-  variable: "--font-pontano",
-});
-
-// Character List
-const characters = [
-  {
-    name: "George",
-    avatar: "/one_avatar.png",
-    health: 90,
-    attack: "Attack",
-    defense: 50,
-  },
-  {
-    name: "Luna",
-    avatar: "/two_avatar.png",
-    health: 75,
-    attack: "Magic",
-    defense: 60,
-  },
-];
-
-// Popover Component
-const Popover = ({ onClose, characterIndex, setCharacterIndex }: PopoverProps) => {
-  const character = characters[characterIndex];
-  const popoverRef = useRef(null);
-
-  const nextCharacter = () => {
-    setCharacterIndex((prev) => (prev + 1) % characters.length);
-  };
-
-  const prevCharacter = () => {
-    setCharacterIndex((prev) => (prev - 1 + characters.length) % characters.length);
-  };
+export default function Home() {
+  const { connected } = useWallet();
+  const [showPopover, setShowPopover] = useState(false);
+  const [showWalletPopover, setShowWalletPopover] = useState(false);
+  const [characterIndex, setCharacterIndex] = useState(0);
+  const setUserExists = useWalletStore((state) => state.setUserExists);
+  const userExists = useWalletStore((state) => state.userExists); 
+  const {publicKey, sendTransaction, signTransaction} = useWallet();
+  const program = useMemo(() => getProvider(publicKey, sendTransaction, signTransaction), [publicKey, sendTransaction, signTransaction]);
 
   useEffect(() => {
-    const handleClickOutside = (event: Event) => {
-      //@ts-ignore
-      if (popoverRef.current && !popoverRef.current.contains(event.target)) {
-        onClose();
+    async function checkUserExistsOnChain () { 
+      if(program === null || publicKey === null) return;
+      const userProfile = await getUser(program, publicKey);
+      if(userProfile) { 
+        setUserExists(true);
       }
-    };
+    }
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [onClose]);
+    checkUserExistsOnChain();
+  }, [program, publicKey, connected]);
 
-  return (
-    <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 font-mono">
-      <div
-        ref={popoverRef}
-        className="relative bg-[#FFF7DC] border-4 border-[#B85C38] rounded-lg w-[700px] p-6 shadow-xl text-center"
-        style={{
-          boxShadow: "0 0 0 4px #FFF7DC, 0 0 0 8px #5B1B63",
-        }}
-      >
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute top-2 right-2 text-[#5B1B63] text-3xl font-extrabold hover:scale-110 transition"
-        >
-          ✕
-        </button>
+  const getWalletStatus = () => {
+    if (!connected) return 'disconnected';
+    if (connected && !userExists) return 'connected';
+    return 'onchain';
+  };
 
-        {/* Left Arrow */}
-        <button
-          onClick={prevCharacter}
-          className="absolute left-2 top-1/2 transform -translate-y-1/2 text-4xl text-[#5B1B63] hover:scale-110 transition"
-        >
-          ◀
-        </button>
+  const handleButtonClick = () => {
+    const status = getWalletStatus();
+    
+    if (status === 'disconnected') {
+      setShowWalletPopover(true);
+    } else if (status === 'connected') {
+      setShowPopover(true);
+    } else {
+      document.getElementById('challenges')?.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
-        {/* Right Arrow */}
-        <button
-          onClick={nextCharacter}
-          className="absolute right-2 top-1/2 transform -translate-y-1/2 text-4xl text-[#5B1B63] hover:scale-110 transition"
-        >
-          ▶
-        </button>
-
-        {/* Avatar */}
-        <div>
-          <Image
-            src={character.avatar}
-            alt={character.name}
-            width={300}
-            height={300}
-            className="mx-auto"
-          />
-        </div>
-
-        {/* Character Info */}
-        <h3 className="text-4xl font-bold text-[#5B1B63] mb-1 -mt-[5rem]">
-          {character.name}
-        </h3>
-        <div className="flex justify-center gap-4 text-[#5B1B63] mb-6 text-sm">
-          <div className="flex items-center gap-1">
-            ❤️ <span className="font-bold text-lg">{character.health}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            🗡️ <span className="font-bold text-lg">{character.attack}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            🛡️ <span className="font-bold text-lg">{character.defense}</span>
-          </div>
-        </div>
-
-        {/* Choose Button */}
-        <button
-          onClick={onClose}
-          className="bg-[#FFC949] border-4 border-[#5B1B63] text-black font-bold py-2 px-6 rounded hover:bg-[#FFD866] transition w-full"
-        >
-          CHOOSE
-        </button>
-      </div>
-    </div>
-  );
-};
-
-// Home Component
-export default function Home() {
-  const { connectWallet } = usePhantom();
-  const [showPopover, setShowPopover] = useState(false);
-  const [characterIndex, setCharacterIndex] = useState(0);
+  const getButtonText = () => {
+    const status = getWalletStatus();
+    return {
+      'disconnected': 'Start Now',
+      'connected': 'Continue',
+      'onchain': 'Explore Challenges'
+    }[status];
+  };
 
   return (
     <div className="relative h-screen w-full overflow-hidden">
-      {/* Background Image */}
       <Image
         src="/landing_page.png"
         alt="Landing Page Background"
@@ -158,39 +69,59 @@ export default function Home() {
         priority
       />
 
-      {/* Content Overlay */}
       <div className="relative z-10">
         <Navbar />
 
         <div className="absolute top-[220%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
-          <h1
-            className={`text-[62px] text-[#5B1B63] leading-[80px] font-extrabold ${poppins.className}`}
-          >
+          <h1 className={`text-[62px] text-[#5B1B63] leading-[80px] font-extrabold ${poppins.className}`}>
             Complete Real-World Challenges, Earn SOL
           </h1>
-          <p
-            className={`mt-4 text-[#5B1B63] text-lg md:text-2xl ${pontano.className}`}
-          >
-            Post adventures, set completion periods, and reward participants with
-            SOL.
+          <p className={`mt-4 text-[#5B1B63] text-lg md:text-2xl ${pontano.className}`}>
+            Post adventures, set completion periods, and reward participants with SOL.
           </p>
           <button
-            onClick={() => setShowPopover(true)}
+            onClick={handleButtonClick}
             className="mt-6 bg-[#FFC949] border-[3px] border-[#420E40] text-black font-medium px-6 py-3 rounded-xl hover:bg-[#FFD866] transition"
           >
-            Start Now
+            {getButtonText()}
           </button>
         </div>
       </div>
 
-      {/* Popover */}
       {showPopover && (
-        <Popover
+        <AvatarPopover
           onClose={() => setShowPopover(false)}
           characterIndex={characterIndex}
           setCharacterIndex={setCharacterIndex}
         />
       )}
+
+      {showWalletPopover && (
+        <WalletPopover 
+          onClose={() => setShowWalletPopover(false)} 
+          status={getWalletStatus()} 
+        />
+      )}
+
+      <button
+        onClick={() => {
+          const status = getWalletStatus();
+          if (status === 'disconnected' || status === 'connected' || status === "onchain") {
+            setShowWalletPopover(true);
+          } 
+        }}
+        className="fixed bottom-6 right-6 bg-[#FFC949] border-4 border-[#5B1B63] text-black font-bold py-3 px-6 rounded-full hover:bg-[#FFD866] transition z-40 flex items-center gap-2"
+      >
+        <Image
+          src="/popover_mon.png"
+          alt="Wallet mascot"
+          width={24}
+          height={24}
+          className="object-contain"
+        />
+        {getWalletStatus() === 'disconnected' ? 'Connect' : 
+         getWalletStatus() === 'connected' ? 'Choose Avatar' : 'Scroll'}
+      </button>
     </div>
   );
 }
