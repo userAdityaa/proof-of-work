@@ -1,19 +1,23 @@
-import usePhantom from "../hooks/usePhantom";
 import Image from "next/image";
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import { getProvider, getUser } from "../blockchain";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useMemo } from "react";
+import { useWalletStore } from "../store/store";
 
 export default function Navbar() {
-  const { connectWallet, disconnectWallet, publicKey } = usePhantom();
+  const { connected } = useWallet();
+  const {publicKey, sendTransaction, signTransaction} = useWallet();
+  const program = useMemo(() => getProvider(publicKey, sendTransaction, signTransaction), [publicKey, sendTransaction, signTransaction]);
+  const setUserExists = useWalletStore((state) => state.setUserExists);
 
-  const shortenAddress = (address: string) =>
-    address.slice(0, 4) + "..." + address.slice(-4);
-
-  const handleClick = () => {
-    if (publicKey) {
-      disconnectWallet(); 
-    } else {
-      connectWallet(); 
+  async function checkUserExistsOnChain () { 
+    if(program === null || publicKey === null) return;
+    const userProfile = await getUser(program, publicKey);
+    if(connected && userProfile) { 
+      setUserExists(true);
     }
-  };
+  } 
 
   return (
     <nav className="w-full px-6 py-4 flex items-center justify-between bg-transparent h-[10rem]">
@@ -30,12 +34,9 @@ export default function Navbar() {
         <a href="#leaderboard" className="text-white underline">
           Leaderboard
         </a>
-        <button
-          onClick={handleClick}
-          className="bg-[#FFC949] border-3 border-[#420E40] text-black font-medium px-4 py-2 rounded-xl hover:bg-[#FFE07A] transition"
-        >
-          {publicKey ? shortenAddress(publicKey) + " (Logout)" : "Connect Wallet"}
-        </button>
+        <div onClick={checkUserExistsOnChain}>
+          <WalletMultiButton />
+        </div>
       </div>
     </nav>
   );
