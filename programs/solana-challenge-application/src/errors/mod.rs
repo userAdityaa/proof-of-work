@@ -4,6 +4,8 @@ use anchor_lang::prelude::*;
 pub enum ErrCode {
     #[msg("Challange count overflowed.")]
     ChallangeCountOverflowed,
+    #[msg("Title exceeded 20 characters.")]
+    TitleTooLong,
     #[msg("Description may not exceed 256 characters.")]
     DescriptionTooLong,
     #[msg("Image URL may not exceed 120 characters.")]
@@ -28,4 +30,6 @@ pub enum ErrCode {
     UsernameTooLong,
     #[msg("Avatar url is greater than 100 character.")]
     AvatarTooLong,
+    #[msg("Challenge is now closed.")]
+    ChallengeClosed,
 }
