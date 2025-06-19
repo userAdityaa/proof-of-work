@@ -1,5 +1,5 @@
 {
-  "address": "4UsmWa9UTxFw1Z9FYpHnpzLqqxX5jgc2e78hdCfQhMEs",
+  "address": "UCtopJk3VFy65sL3ReKu4Vw16hSJGAAMGh6viadz8DT",
   "metadata": {
     "name": "solana_challenge_application",
     "version": "0.1.0",
@@ -890,6 +890,14 @@
           },
           {
             "name": "created_at",
+            "type": "u64"
+          },
+          {
+            "name": "creator_score",
+            "type": "u64"
+          },
+          {
+            "name": "participant_score",
             "type": "u64"
           }
         ]

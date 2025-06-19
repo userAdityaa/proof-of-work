@@ -2,6 +2,7 @@ import { Program, Wallet, AnchorProvider, BN } from "@coral-xyz/anchor";
 import { AccountMeta, Connection, PublicKey, SystemProgram, TransactionSignature } from "@solana/web3.js";
 import { SolanaChallengeApplication } from '../../../target/types/solana_challenge_application';
 import idl from '../idl/solana_challenge_application.json';
+import axios from 'axios';
 
 let tx: any;
 const RPC_URL = "https://api.devnet.solana.com";
@@ -48,35 +49,46 @@ export const getReadOnlyProvider = (): Program<SolanaChallengeApplication> => {
 }
 
 export const createUser = async (
-    program: Program<SolanaChallengeApplication>, 
-    publicKey: PublicKey,
-    username: string, 
-    avatar_url: string
-): Promise<TransactionSignature> => { 
-    const [profilePDA] = PublicKey.findProgramAddressSync(
-        [Buffer.from("profile"), publicKey.toBuffer()],
-        program.programId
-    );
+  program: Program<SolanaChallengeApplication>,
+  publicKey: PublicKey,
+  username: string,
+  avatar_url: string
+): Promise<TransactionSignature> => {
+  const [profilePDA] = PublicKey.findProgramAddressSync(
+    [Buffer.from("profile"), publicKey.toBuffer()],
+    program.programId
+  );
 
-    tx = await program.methods
-        .createUser(username, avatar_url)
-        .accountsPartial({
-            user: publicKey,
-            profile: profilePDA,
-            systemProgram: SystemProgram.programId,
-        })
-        .rpc();
+  try {
+    const tx = await program.methods
+      .createUser(username, avatar_url)
+      .accountsPartial({
+        user: publicKey,
+        profile: profilePDA,
+        systemProgram: SystemProgram.programId,
+      })
+      .rpc();
 
     const connection = new Connection(
-        program.provider.connection.rpcEndpoint, 
-        'confirmed'
+      program.provider.connection.rpcEndpoint,
+      'confirmed'
     );
 
     await connection.confirmTransaction(tx, 'finalized');
-    console.log("tx: ", tx);
+
+    await axios.post("/api/user", {
+      name: username,
+      avatar_url: avatar_url,
+      participant_score: 0,
+      creator_score: 0,
+    });
 
     return tx;
-}
+  } catch (error) {
+    console.error("Error creating user:", error);
+    throw error;
+  }
+};
 
 export const getUser = async (
     program: Program<SolanaChallengeApplication>,
@@ -90,7 +102,8 @@ export const getUser = async (
     try {
         const userProfile = await program.account.user.fetch(profilePDA);
         return {
-            userProfile
+            userProfile, 
+            exists: true, 
         }
     } catch (err) {
         // Usually this means the account doesn't exist
