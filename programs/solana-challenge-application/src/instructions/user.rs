@@ -14,6 +14,8 @@ pub fn create_user(ctx: Context<CreateUser>, username: String, avatar_url: Strin
     profile.username = username;
     profile.avatar_url = avatar_url;
     profile.created_at = Clock::get()?.unix_timestamp as u64;
+    profile.participant_score = 0;
+    profile.creator_score = 0;
 
     Ok(())
 }

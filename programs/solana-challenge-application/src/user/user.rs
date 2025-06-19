@@ -9,4 +9,6 @@ pub struct User {
     #[max_len(100)]
     pub avatar_url: String,
     pub created_at: u64,
+    pub creator_score: u64,
+    pub participant_score: u64,
 }
