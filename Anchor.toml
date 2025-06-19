@@ -5,7 +5,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-solana_challenge_application = "4UsmWa9UTxFw1Z9FYpHnpzLqqxX5jgc2e78hdCfQhMEs"
+solana_challenge_application = "UCtopJk3VFy65sL3ReKu4Vw16hSJGAAMGh6viadz8DT"
 
 [registry]
 url = "https://api.apr.dev"
