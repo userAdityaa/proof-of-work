@@ -14,7 +14,7 @@ export default function Navbar() {
   async function checkUserExistsOnChain () { 
     if(program === null || publicKey === null) return;
     const userProfile = await getUser(program, publicKey);
-    if(connected && userProfile) { 
+    if(userProfile.exists && connected) { 
       setUserExists(true);
     }
   } 

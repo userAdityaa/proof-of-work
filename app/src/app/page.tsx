@@ -28,7 +28,8 @@ export default function Home() {
     async function checkUserExistsOnChain() {
       if (program === null || publicKey === null) return;
       const userProfile = await getUser(program, publicKey);
-      if (userProfile) {
+      console.log("now check: ", userProfile)
+      if (userProfile.exists) {
         setUserExists(true);
       }
     }
