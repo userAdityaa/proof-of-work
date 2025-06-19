@@ -1,5 +1,5 @@
 {
-  "address": "3ktaaLhu7U97irLAWRjWWDnSf4rzLgVwQWtijUQ15tFF",
+  "address": "4UsmWa9UTxFw1Z9FYpHnpzLqqxX5jgc2e78hdCfQhMEs",
   "metadata": {
     "name": "solana_challenge_application",
     "version": "0.1.0",
@@ -7,6 +7,135 @@
     "description": "Created with Anchor"
   },
   "instructions": [
+    {
+      "name": "accept_submission",
+      "discriminator": [
+        65,
+        133,
+        222,
+        91,
+        162,
+        82,
+        229,
+        203
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "challenge"
+          ]
+        },
+        {
+          "name": "challenge",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  104,
+                  97,
+                  108,
+                  108,
+                  101,
+                  110,
+                  103,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              },
+              {
+                "kind": "account",
+                "path": "challenge.cid",
+                "account": "Challenge"
+              }
+            ]
+          }
+        },
+        {
+          "name": "participant_submission",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  117,
+                  98,
+                  109,
+                  105,
+                  115,
+                  115,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "participant_submission.participant",
+                "account": "ParticipantSubmission"
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              },
+              {
+                "kind": "account",
+                "path": "challenge.cid",
+                "account": "Challenge"
+              }
+            ]
+          }
+        },
+        {
+          "name": "recipient_wallet",
+          "writable": true
+        },
+        {
+          "name": "reward_payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "close_program_state",
+      "discriminator": [
+        71,
+        153,
+        195,
+        5,
+        141,
+        244,
+        200,
+        84
+      ],
+      "accounts": [
+        {
+          "name": "program_state",
+          "writable": true
+        },
+        {
+          "name": "recipient",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
     {
       "name": "create_challenge",
       "discriminator": [
@@ -21,7 +150,8 @@
       ],
       "accounts": [
         {
-          "name": "program_state"
+          "name": "program_state",
+          "writable": true
         },
         {
           "name": "creator",
@@ -43,6 +173,10 @@
           "type": "u64"
         },
         {
+          "name": "title",
+          "type": "string"
+        },
+        {
           "name": "description",
           "type": "string"
         },
@@ -61,10 +195,6 @@
         {
           "name": "reward_amount",
           "type": "u64"
-        },
-        {
-          "name": "reward_mint",
-          "type": "pubkey"
         }
       ]
     },
@@ -164,6 +294,10 @@
                 ]
               },
               {
+                "kind": "account",
+                "path": "creator"
+              },
+              {
                 "kind": "arg",
                 "path": "cid"
               }
@@ -181,6 +315,57 @@
           "type": "u64"
         }
       ]
+    },
+    {
+      "name": "initialize_program_state",
+      "discriminator": [
+        114,
+        90,
+        170,
+        208,
+        223,
+        41,
+        40,
+        160
+      ],
+      "accounts": [
+        {
+          "name": "program_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  103,
+                  114,
+                  97,
+                  109,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "initializer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
     },
     {
       "name": "start_challenge",
@@ -213,11 +398,15 @@
                   97,
                   108,
                   108,
-                  97,
+                  101,
                   110,
                   103,
                   101
                 ]
+              },
+              {
+                "kind": "arg",
+                "path": "creator"
               },
               {
                 "kind": "arg",
@@ -235,6 +424,113 @@
         {
           "name": "cid",
           "type": "u64"
+        },
+        {
+          "name": "creator",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "submit_challenge",
+      "discriminator": [
+        138,
+        65,
+        75,
+        102,
+        164,
+        142,
+        10,
+        202
+      ],
+      "accounts": [
+        {
+          "name": "challenger",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "participant_submission",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  117,
+                  98,
+                  109,
+                  105,
+                  115,
+                  115,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "challenger"
+              },
+              {
+                "kind": "arg",
+                "path": "creator"
+              },
+              {
+                "kind": "arg",
+                "path": "cid"
+              }
+            ]
+          }
+        },
+        {
+          "name": "challenge",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  104,
+                  97,
+                  108,
+                  108,
+                  101,
+                  110,
+                  103,
+                  101
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "creator"
+              },
+              {
+                "kind": "arg",
+                "path": "cid"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "cid",
+          "type": "u64"
+        },
+        {
+          "name": "creator",
+          "type": "pubkey"
+        },
+        {
+          "name": "proof_url",
+          "type": "string"
         }
       ]
     },
@@ -276,6 +572,10 @@
                 ]
               },
               {
+                "kind": "account",
+                "path": "creator"
+              },
+              {
                 "kind": "arg",
                 "path": "cid"
               }
@@ -291,6 +591,10 @@
         {
           "name": "cid",
           "type": "u64"
+        },
+        {
+          "name": "title",
+          "type": "string"
         },
         {
           "name": "description",
@@ -311,10 +615,6 @@
         {
           "name": "reward_amount",
           "type": "u64"
-        },
-        {
-          "name": "reward_mint",
-          "type": "pubkey"
         }
       ]
     }
@@ -331,6 +631,19 @@
         81,
         22,
         208
+      ]
+    },
+    {
+      "name": "ParticipantSubmission",
+      "discriminator": [
+        236,
+        194,
+        199,
+        219,
+        172,
+        248,
+        206,
+        66
       ]
     },
     {
@@ -368,63 +681,73 @@
     },
     {
       "code": 6001,
+      "name": "TitleTooLong",
+      "msg": "Title exceeded 20 characters."
+    },
+    {
+      "code": 6002,
       "name": "DescriptionTooLong",
       "msg": "Description may not exceed 256 characters."
     },
     {
-      "code": 6002,
+      "code": 6003,
       "name": "ImageUrlTooLong",
       "msg": "Image URL may not exceed 120 characters."
     },
     {
-      "code": 6003,
+      "code": 6004,
       "name": "LocationTooLong",
       "msg": "Location may not exceed 20 characters."
     },
     {
-      "code": 6004,
+      "code": 6005,
       "name": "InvalidRewardAmount",
       "msg": "Reward amount must be greater than zero."
     },
     {
-      "code": 6005,
+      "code": 6006,
       "name": "InvalidRewardType",
       "msg": "Unknown reward type."
     },
     {
-      "code": 6006,
+      "code": 6007,
       "name": "Unauthorized",
       "msg": "The account is not authorized for this action."
     },
     {
-      "code": 6007,
+      "code": 6008,
       "name": "ChallengeAlreadyOpened",
       "msg": "In progress challenge can't be updated in between."
     },
     {
-      "code": 6008,
+      "code": 6009,
       "name": "InvalidChallengeId",
       "msg": "The challenge id didn't match."
     },
     {
-      "code": 6009,
+      "code": 6010,
       "name": "ChallengeNotOpen",
       "msg": "Challenge is not open for participation."
     },
     {
-      "code": 6010,
+      "code": 6011,
       "name": "MaxParticipantsReached",
       "msg": "Maximum participants reached."
     },
     {
-      "code": 6011,
+      "code": 6012,
       "name": "UsernameTooLong",
       "msg": "Username is greater than 15 character."
     },
     {
-      "code": 6012,
+      "code": 6013,
       "name": "AvatarTooLong",
       "msg": "Avatar url is greater than 100 character."
+    },
+    {
+      "code": 6014,
+      "name": "ChallengeClosed",
+      "msg": "Challenge is now closed."
     }
   ],
   "types": [
@@ -440,6 +763,10 @@
           {
             "name": "owner",
             "type": "pubkey"
+          },
+          {
+            "name": "title",
+            "type": "string"
           },
           {
             "name": "description",
@@ -470,10 +797,6 @@
             "type": "u64"
           },
           {
-            "name": "reward_mint",
-            "type": "pubkey"
-          },
-          {
             "name": "status",
             "type": "u8"
           },
@@ -484,16 +807,38 @@
             }
           },
           {
-            "name": "proof_url",
+            "name": "submissions",
             "type": {
-              "option": "string"
+              "vec": "pubkey"
             }
+          }
+        ]
+      }
+    },
+    {
+      "name": "ParticipantSubmission",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "participant",
+            "type": "pubkey"
           },
           {
-            "name": "certified_by",
-            "type": {
-              "option": "pubkey"
-            }
+            "name": "proof_url",
+            "type": "string"
+          },
+          {
+            "name": "wallet_address",
+            "type": "pubkey"
+          },
+          {
+            "name": "verified",
+            "type": "bool"
+          },
+          {
+            "name": "score",
+            "type": "u64"
           }
         ]
       }
