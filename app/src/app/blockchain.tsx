@@ -71,14 +71,15 @@ export const createUser = async (
 
     const connection = new Connection(
       program.provider.connection.rpcEndpoint,
-      'confirmed'
+      "confirmed"
     );
 
-    await connection.confirmTransaction(tx, 'finalized');
+    await connection.confirmTransaction(tx, "finalized");
 
     await axios.post("/api/user", {
+      id: publicKey.toBase58(), 
       name: username,
-      avatar_url: avatar_url,
+      avatar_url,
       participant_score: 0,
       creator_score: 0,
     });
@@ -402,53 +403,84 @@ export const submitChallenge = async (
 
 export const acceptSubmission = async (
   program: Program<SolanaChallengeApplication>,
-  owner: PublicKey,   
-  cid: BN,               
-  participant: PublicKey,   
+  owner: PublicKey,
+  cid: BN,
+  participant: PublicKey
 ): Promise<TransactionSignature> => {
   const [challengePDA] = PublicKey.findProgramAddressSync(
-    [
-      Buffer.from("challenge"),
-      owner.toBuffer(),
-      cid.toArrayLike(Buffer, "le", 8),
-    ],
+    [Buffer.from("challenge"), owner.toBuffer(), cid.toArrayLike(Buffer, "le", 8)],
     program.programId
   );
 
   const [submissionPDA] = PublicKey.findProgramAddressSync(
-    [
-      Buffer.from("submission"),
-      participant.toBuffer(),
-      owner.toBuffer(),
-      cid.toArrayLike(Buffer, "le", 8),
-    ],
+    [Buffer.from("submission"), participant.toBuffer(), owner.toBuffer(), cid.toArrayLike(Buffer, "le", 8)],
     program.programId
   );
 
-  const recipientWallet = participant;
-
   const tx = await program.methods
-  .acceptSubmission()
-  .accountsPartial({
-    owner,
-    challenge: challengePDA,
-    participantSubmission: submissionPDA,
-    rewardPayer: owner,
-    systemProgram: SystemProgram.programId,
-    recipientWallet: recipientWallet,
-  })
-  .remainingAccounts([
-    {
-      pubkey: recipientWallet,
-      isWritable: true,  
-      isSigner: false,
-    } as AccountMeta,
-  ])
-  .rpc({ commitment: "confirmed" });
+    .acceptSubmission()
+    .accountsPartial({
+      owner,
+      challenge: challengePDA,
+      participantSubmission: submissionPDA,
+      rewardPayer: owner,
+      systemProgram: SystemProgram.programId,
+      recipientWallet: participant,
+    })
+    .remainingAccounts([
+      {
+        pubkey: participant,
+        isWritable: true,
+        isSigner: false,
+      } as AccountMeta,
+    ])
+    .rpc({ commitment: "confirmed" });
 
-  console.log("Accept submission transaction:", tx);
+  try {
+    // Step 1: Fetch the challenge account to get reward_amount
+    const challengeAccount = await program.account.challenge.fetch(challengePDA);
+    const rewardAmount = challengeAccount.rewardAmount.toNumber(); // Assuming it's BN
+
+    // Step 2: Fetch current scores from backend
+    const participantId = encodeURIComponent(participant.toBase58()); 
+    const ownerId = encodeURIComponent(owner.toBase58());
+
+    const [participantRes, ownerRes] = await Promise.all([
+      fetch(`/api/user/${participantId}`),
+      fetch(`/api/user/${ownerId}`)
+    ]);
+
+    const [participantData, ownerData] = await Promise.all([
+      participantRes.json(),
+      ownerRes.json()
+    ]);
+
+    const newParticipantScore = (participantData.participant_score || 0) + rewardAmount;
+    const newCreatorScore = (ownerData.creator_score || 0) + rewardAmount;
+
+
+    // Step 3: Update scores in backend
+    await Promise.all([
+      fetch(`/api/user/${participantId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ participant_score: newParticipantScore }),
+      }),
+      fetch(`/api/user/${ownerId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ creator_score: newCreatorScore }),
+      }),
+    ]);
+
+    console.log("User scores updated with reward amount:", rewardAmount);
+  } catch (error) {
+    console.error("Failed to update user scores:", error);
+  }
+
   return tx;
 };
+
 
 export const getAllSubmissionsForChallenge = async (
   program: Program<SolanaChallengeApplication>,
