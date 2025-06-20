@@ -8,7 +8,7 @@ import { BN } from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { SolanaChallengeApplication } from "../../../../target/types/solana_challenge_application";
 import { takePartChallenge } from "../blockchain";
-import { acceptSubmission } from "../blockchain"; // Assuming acceptSubmission is in the same file or imported
+import { acceptSubmission } from "../blockchain";
 
 interface Challenge {
   publicKey: PublicKey;
@@ -23,6 +23,7 @@ interface Challenge {
     location: string;
     rewardType: number;
     submissions: PublicKey[];
+    status: BN;
   };
 }
 
@@ -143,21 +144,24 @@ export default function ChallengeSection() {
         throw new Error("Invalid data format: expected an array of challenges");
       }
 
-      const transformedChallenges: Challenge[] = fetchedChallenges.map((challenge: any) => ({
-        publicKey: new PublicKey(challenge.publicKey),
-        account: {
-          cid: new BN(challenge.cid),
-          owner: new PublicKey(challenge.owner),
-          title: challenge.title || null,
-          description: challenge.description || "",
-          reward_amount: new BN(challenge.rewardAmount),
-          participant: (challenge.participant || []).map((p: any) => new PublicKey(p)),
-          imageUrl: challenge.imageUrl || "",
-          location: challenge.location || "",
-          rewardType: challenge.rewardType || 0,
-          submissions: (challenge.submissions || []).map((s: any) => new PublicKey(s)),
-        },
-      }));
+      const transformedChallenges: Challenge[] = fetchedChallenges
+        .filter((challenge: any) => !new BN(challenge.status).eq(new BN(3)))
+        .map((challenge: any) => ({
+          publicKey: new PublicKey(challenge.publicKey),
+          account: {
+            cid: new BN(challenge.cid),
+            owner: new PublicKey(challenge.owner),
+            title: challenge.title || null,
+            description: challenge.description || "",
+            reward_amount: new BN(challenge.rewardAmount),
+            participant: (challenge.participant || []).map((p: any) => new PublicKey(p)),
+            imageUrl: challenge.imageUrl || "",
+            location: challenge.location || "",
+            rewardType: challenge.rewardType || 0,
+            submissions: (challenge.submissions || []).map((s: any) => new PublicKey(s)),
+            status: new BN(challenge.status),
+          },
+        }));
 
       // Fetch submissions for each challenge and update submission status
       const submissionsMap = new Map<string, Submission[]>();
@@ -353,7 +357,7 @@ export default function ChallengeSection() {
         program,
         currentChallenge.account.owner,
         currentChallenge.account.cid,
-        submission.participant
+        submission.participant,
       );
       console.log(`Submission accepted: ${tx}`);
       await fetchChallenges(); // Refresh challenges and submissions
@@ -496,18 +500,26 @@ export default function ChallengeSection() {
   }, [isCreatePopoverOpen, isUpdatePopoverOpen, isDailyChallengePopoverOpen, isSubmitProofPopoverOpen, isViewSubmissionsPopoverOpen]);
 
   const filteredChallenges = useMemo(() => {
-    if (!publicKey) return challenges;
+    if (!publicKey) return challenges.filter((challenge) => !challenge.account.status.eq(new BN(3)));
     switch (filter) {
       case "open":
-        return challenges.filter((challenge) => !challenge.account.owner.equals(ADMIN_WALLET));
+        return challenges.filter(
+          (challenge) => challenge.account.owner !== ADMIN_WALLET && !challenge.account.status.eq(new BN(3))
+        );
       case "participated":
-        return challenges.filter((challenge) =>
-          challenge.account.participant.some((participant) => participant.equals(publicKey))
+        return challenges.filter(
+          (challenge) =>
+            challenge.account.participant.some((participant) => participant.equals(publicKey)) &&
+            !challenge.account.status.eq(new BN(3))
         );
       case "created":
-        return challenges.filter((challenge) => challenge.account.owner.equals(publicKey));
+        return challenges.filter(
+          (challenge) => challenge.account.owner.equals(publicKey) && !challenge.account.status.eq(new BN(3))
+        );
       default:
-        return challenges.filter((challenge) => !challenge.account.owner.equals(ADMIN_WALLET));
+        return challenges.filter(
+          (challenge) => !challenge.account.owner.equals(ADMIN_WALLET) && !challenge.account.status.eq(new BN(3))
+        );
     }
   }, [challenges, filter, publicKey]);
 
@@ -518,15 +530,18 @@ export default function ChallengeSection() {
 
   const adminChallenges = useMemo(() => {
     if (!publicKey) {
-      return challenges.filter((challenge) => challenge.account.owner.equals(ADMIN_WALLET));
+      return challenges.filter(
+        (challenge) => challenge.account.owner.equals(ADMIN_WALLET) && !challenge.account.status.eq(new BN(3))
+      );
     }
     return challenges.filter(
       (challenge) =>
         challenge.account.owner.equals(ADMIN_WALLET) &&
-        !challenge.account.participant.some((participant) => participant.equals(publicKey))
+        !challenge.account.participant.some((participant) => participant.equals(publicKey)) &&
+        !challenge.account.status.eq(new BN(3))
     );
   }, [challenges, publicKey]);
-
+  
   return (
     <div className="relative h-screen w-full overflow-hidden">
       <Image
@@ -664,7 +679,7 @@ export default function ChallengeSection() {
                   >
                     {loading ? "Processing..." : "Take Part"}
                   </button>
-                ) : null}w
+                ) : null}
               </div>
               {currentPage > 0 && index === 0 && (
                 <Image
