@@ -8,7 +8,6 @@ pub struct ParticipantSubmission {
     pub proof_url: String,
     pub wallet_address: Pubkey,
     pub verified: bool,
-    pub score: u64,
 }
 
 #[account]

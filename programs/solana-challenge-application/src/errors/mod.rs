@@ -32,4 +32,6 @@ pub enum ErrCode {
     AvatarTooLong,
     #[msg("Challenge is now closed.")]
     ChallengeClosed,
+    #[msg("User Score overflowed.")]
+    Overflow,
 }

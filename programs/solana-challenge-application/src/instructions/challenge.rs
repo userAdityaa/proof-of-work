@@ -5,6 +5,7 @@ use crate::challenge::*;
 use crate::constants::ANCHOR_DISCRIMINTOR_SIZE;
 use crate::errors::ErrCode;
 use crate::states::program_state::ProgramState;
+use crate::user::User;
 
 pub fn create_challenge(
     ctx: Context<CreateChallenge>,
@@ -102,12 +103,13 @@ pub fn start_challange(ctx: Context<StartChallange>, cid: u64, creator: Pubkey) 
 pub fn accept_submission(ctx: Context<AcceptSubmission>) -> Result<()> {
     let challenge = &mut ctx.accounts.challenge;
     let submission = &mut ctx.accounts.participant_submission;
+    let owner_user = &mut ctx.accounts.owner_user_account;
+    let participant_user = &mut ctx.accounts.participant_user_account;
 
     require!(challenge.status == 0, ErrCode::ChallengeClosed);
 
     // Mark as verified
     submission.verified = true;
-    submission.score = challenge.reward_amount;
 
     // Transfer reward
     let reward_amount = challenge.reward_amount;
@@ -125,13 +127,24 @@ pub fn accept_submission(ctx: Context<AcceptSubmission>) -> Result<()> {
                 ctx.accounts.system_program.to_account_info(),
             ],
         )?;
+
+        participant_user.participant_score = participant_user
+            .participant_score
+            .checked_add(reward_amount)
+            .ok_or(ErrCode::Overflow)?;
+
+        owner_user.creator_score = owner_user
+            .creator_score
+            .checked_add(reward_amount)
+            .ok_or(ErrCode::Overflow)?;
     }
 
-    // Optional: mark challenge as completed (e.g., status = 1)
-    challenge.status = 1;
+    // Close challenge
+    challenge.status = 3;
 
     Ok(())
 }
+
 
 
 pub fn submit_challenge(ctx: Context<SubmitChallenge>, cid: u64, creator: Pubkey, proof_url: String) -> Result<()> {
@@ -144,7 +157,6 @@ pub fn submit_challenge(ctx: Context<SubmitChallenge>, cid: u64, creator: Pubkey
     participant_submission.participant= challenger.key();
     participant_submission.proof_url = proof_url;
     participant_submission.verified = false;
-    participant_submission.score = 0;
     participant_submission.wallet_address = challenger.key();
     let submission_pda = participant_submission.key();
 
@@ -316,6 +328,12 @@ pub struct AcceptSubmission<'info> {
 
     #[account(mut)]
     pub reward_payer: Signer<'info>,
+
+    #[account(mut, seeds = [b"profile", owner.key().as_ref()], bump)]
+    pub owner_user_account: Account<'info, User>,
+
+    #[account(mut, seeds = [b"profile", participant_submission.participant.as_ref()], bump)]
+    pub participant_user_account: Account<'info, User>,
 
     pub system_program: Program<'info, System>,
 }
