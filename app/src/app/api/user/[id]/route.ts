@@ -7,19 +7,9 @@ const prisma = new PrismaClient();
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const { name, participant_score, creator_score } = await request.json();
-    const id = parseInt(params.id);
-
-    // Validate input
-    if (isNaN(id)) {
-      return NextResponse.json(
-        { error: "Invalid user ID" },
-        { status: 400 }
-      );
-    }
-
     // Update user
     const user = await prisma.user.update({
-      where: { id },
+      where: { id: params.id },
       data: {
         name: name ?? undefined,
         participant_score: participant_score ?? undefined,
@@ -37,6 +27,34 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       { error: "Failed to update user or user not found" },
       { status: 500 }
     );
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const id = params.id;
+
+  if (!id) {
+    return NextResponse.json({ error: "Missing user id" }, { status: 400 });
+  }
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(user, { status: 200 });
+  } catch (error) {
+    console.error("Failed to fetch user:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   } finally {
     await prisma.$disconnect();
   }

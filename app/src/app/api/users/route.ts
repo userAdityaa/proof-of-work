@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
 
         const users = await prisma.user.findMany({
             orderBy: {
-                [sortBy]: "asc",
+                [sortBy]: "desc",
             },
         });
 
