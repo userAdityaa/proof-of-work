@@ -20,22 +20,29 @@ export default function Navbar() {
   } 
 
   return (
-    <nav className="w-full px-6 py-4 flex items-center justify-between bg-transparent h-[10rem]">
+    <nav className="w-full px-6 py-4 max-md:px-0 flex items-center justify-between max-md:justify-start max-md:gap-20 h-[10rem] max-md:h-[8rem]">
       {/* Logo */}
       <div className="flex items-center">
-        <Image src="/logo.png" alt="Logo" width={250} height={250} priority />
+        <Image
+          src="/logo.png"
+          alt="Logo"
+          width={250}
+          height={250}
+          className="w-[250px] max-md:w-[165px] h-auto"
+          priority
+        />
       </div>
 
       {/* Menu Links + Button */}
-      <div className="flex items-center space-x-6 mb-[2rem]">
-        <a href="#explore" className="text-white underline">
+      <div className="flex items-center space-x-6 mb-[2rem] max-md:mt-2">
+        <a href="#explore" className="text-white underline max-md:hidden">
           Explore
         </a>
-        <a href="#leaderboard" className="text-white underline">
+        <a href="#leaderboard" className="text-white underline max-md:hidden">
           Leaderboard
         </a>
-        <div onClick={checkUserExistsOnChain}>
-          <WalletMultiButton />
+        <div onClick={checkUserExistsOnChain} className="max-md:w-[10rem]">
+          <WalletMultiButton/>
         </div>
       </div>
     </nav>

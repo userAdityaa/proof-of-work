@@ -17,6 +17,7 @@ export default function Home() {
   const [showWalletPopover, setShowWalletPopover] = useState(false);
   const [characterIndex, setCharacterIndex] = useState(0);
   const [isInLandingSection, setIsInLandingSection] = useState(true);
+  const [isSpinning, setIsSpinning] = useState(false); // New state for slot machine animation
   const setUserExists = useWalletStore((state) => state.setUserExists);
   const userExists = useWalletStore((state) => state.userExists);
 
@@ -28,7 +29,7 @@ export default function Home() {
     async function checkUserExistsOnChain() {
       if (program === null || publicKey === null) return;
       const userProfile = await getUser(program, publicKey);
-      console.log("now check: ", userProfile)
+      console.log("now check: ", userProfile);
       if (userProfile.exists) {
         setUserExists(true);
       }
@@ -36,7 +37,7 @@ export default function Home() {
 
     checkUserExistsOnChain();
   }, [program, publicKey, connected]);
-  
+
   useEffect(() => {
     const handleScroll = () => {
       const isStillInLanding = window.scrollY < window.innerHeight * 0.9;
@@ -60,7 +61,12 @@ export default function Home() {
     } else if (status === "connected") {
       setShowPopover(true);
     } else {
-      document.getElementById("challenges")?.scrollIntoView({ behavior: "smooth" });
+      // Trigger slot machine animation before scrolling
+      setIsSpinning(true);
+      setTimeout(() => {
+        document.getElementById("challenges")?.scrollIntoView({ behavior: "smooth" });
+        setIsSpinning(false);
+      }, 1000); // Duration of the slot machine animation
     }
   };
 
@@ -76,7 +82,7 @@ export default function Home() {
   return (
     <div className="w-full overflow-x-hidden">
       {/* Landing Page Section */}
-      <section className="relative h-screen w-full overflow-hidden">
+      <section className={`relative h-screen w-full overflow-hidden ${isSpinning ? "slot-machine-spin" : ""}`}>
         <Image
           src="/landing_page.png"
           alt="Landing Page Background"
@@ -88,16 +94,16 @@ export default function Home() {
         <div className="relative z-10">
           <Navbar />
 
-          <div className="flex flex-col items-center h-screen text-center w-[50%] mx-auto">
-            <h1 className={`text-[62px] text-[#5B1B63] leading-[80px] font-extrabold ${poppins.className}`}>
+          <div className="flex flex-col items-center h-screen text-center w-[50%] max-md:w-[90%] mx-auto max-md:mt-[2rem]">
+            <h1 className={`text-[62px] text-[#5B1B63] leading-[80px] font-extrabold ${poppins.className} max-md:text-[3.2rem] max-md:font-bold max-md:leading-[3.5rem] max-md:w-[100%]`}>
               Complete Real-World Challenges, Earn SOL
             </h1>
-            <p className={`mt-4 text-[#5B1B63] text-lg md:text-2xl ${pontano.className}`}>
+            <p className={`mt-4 text-[#5B1B63] text-lg md:text-2xl ${pontano.className} max-md:text-[1.6rem] max-md:leading-[2rem]`}>
               Post adventures, set completion periods, and reward participants with SOL.
             </p>
             <button
               onClick={handleButtonClick}
-              className="mt-6 bg-[#FFC949] border-[3px] border-[#420E40] text-black font-medium px-6 py-3 rounded-xl hover:bg-[#FFD866] transition"
+              className="mt-6 bg-[#FFC949] border-[3px] border-[#420E40] text-black px-6 py-3 rounded-xl hover:bg-[#FFD866] transition max-md:text-xl max-md:font-semibold font-bold"
             >
               {getButtonText()}
             </button>
@@ -112,7 +118,7 @@ export default function Home() {
           />
         )}
 
-        {showWalletPopover && isInLandingSection &&  (
+        {showWalletPopover && isInLandingSection && (
           <WalletPopover onClose={() => setShowWalletPopover(false)} status={getWalletStatus()} />
         )}
 
@@ -132,22 +138,22 @@ export default function Home() {
             height={24}
             className="object-contain"
           />
-          {getWalletStatus() === "disconnected"
-            ? "Connect"
-            : getWalletStatus() === "connected"
-            ? "Choose Avatar"
-            : "Scroll"}
+          <div className="max-md:hidden">
+            {getWalletStatus() === "disconnected"
+              ? "Connect"
+              : getWalletStatus() === "connected"
+              ? "Choose Avatar"
+              : "Scroll"}
+          </div>
         </button>
       </section>
 
-      {/* Challenge Section */}
       <section id="challenges">
         <ChallengeSection />
       </section>
 
-
       <section id="leaderboard">
-        <LeaderBoardSection/>
+        <LeaderBoardSection />
       </section>
     </div>
   );
