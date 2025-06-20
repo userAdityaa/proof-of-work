@@ -4,7 +4,6 @@ import { SolanaChallengeApplication } from '../../../target/types/solana_challen
 import idl from '../idl/solana_challenge_application.json';
 import axios from 'axios';
 
-let tx: any;
 const RPC_URL = "https://api.devnet.solana.com";
 
 export const getProvider = (
@@ -138,7 +137,7 @@ export const createChallenge = async (
     programStateAccount = await program.account.programState.fetch(programStatePDA);
     console.log("Program state already exists.");
   } catch (err) {
-    console.log("Program state not found. Initializing...");
+    console.log("Program state not found. Initializing...", err);
 
     try {
       const tx = await program.methods

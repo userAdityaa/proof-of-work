@@ -2,7 +2,7 @@ import Image from "next/image";
 import { poppins } from "@/constants/Font";
 import { useState, useEffect, useMemo } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { PublicKey, SystemProgram, TransactionSignature } from "@solana/web3.js";
+import { PublicKey } from "@solana/web3.js";
 import { createChallenge, deleteChallenge, getAllChallenge, getProvider, updateChallenge, submitChallenge, getAllSubmissionsForChallenge } from "../blockchain";
 import { BN } from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
@@ -338,7 +338,7 @@ export default function ChallengeSection() {
     }
     try {
       setCurrentChallenge(challenge);
-      const challengeSubmissions = submissions.get(challenge.publicKey.toString()) || [];
+      // submissions.get(challenge.publicKey.toString()) || [];
       setIsViewSubmissionsPopoverOpen(true);
     } catch (err: any) {
       console.error("Error viewing submissions:", err);

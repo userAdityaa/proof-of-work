@@ -4,7 +4,10 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(
+  request: NextRequest, 
+  { params }: { params: { id: string } }
+) {
   try {
     const { name, participant_score, creator_score } = await request.json();
     // Update user
@@ -32,7 +35,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   }
 }
 
-export async function GET(
+export async function GET(  
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
