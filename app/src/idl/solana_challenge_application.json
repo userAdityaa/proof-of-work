@@ -1,5 +1,5 @@
 {
-  "address": "UCtopJk3VFy65sL3ReKu4Vw16hSJGAAMGh6viadz8DT",
+  "address": "GE5gMjEEKL248KG8ZxsBbWsAffiNjN8EoBTCNtTLHJKV",
   "metadata": {
     "name": "solana_challenge_application",
     "version": "0.1.0",
@@ -104,6 +104,55 @@
           "name": "reward_payer",
           "writable": true,
           "signer": true
+        },
+        {
+          "name": "owner_user_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  102,
+                  105,
+                  108,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              }
+            ]
+          }
+        },
+        {
+          "name": "participant_user_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  102,
+                  105,
+                  108,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "participant_submission.participant",
+                "account": "ParticipantSubmission"
+              }
+            ]
+          }
         },
         {
           "name": "system_program",
@@ -748,6 +797,11 @@
       "code": 6014,
       "name": "ChallengeClosed",
       "msg": "Challenge is now closed."
+    },
+    {
+      "code": 6015,
+      "name": "Overflow",
+      "msg": "User Score overflowed."
     }
   ],
   "types": [
@@ -835,10 +889,6 @@
           {
             "name": "verified",
             "type": "bool"
-          },
-          {
-            "name": "score",
-            "type": "u64"
           }
         ]
       }
