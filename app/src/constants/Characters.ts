@@ -6,7 +6,7 @@ export const characters = [
     defense: 50,
   },
   {
-    avatar: "/two_avatar.png",
+    avatar: "/avatar_one.png",
     health: 75,
     attack: "Magic",
     defense: 60,

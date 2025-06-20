@@ -1,4 +1,4 @@
-import { Pontano_Sans, Poppins } from "next/font/google";
+import { Pontano_Sans, Poppins, Luckiest_Guy } from "next/font/google";
 
 export const poppins = Poppins({
   subsets: ["latin"],
@@ -11,3 +11,9 @@ export const pontano = Pontano_Sans({
   weight: ["400", "500"],
   variable: "--font-pontano",
 });
+
+export const luckiest_guy = Luckiest_Guy({
+  subsets: ["latin"],
+  weight: ["400"],
+})
+
