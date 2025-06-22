@@ -1,6 +1,6 @@
 import { Program, Wallet, AnchorProvider, BN } from "@coral-xyz/anchor";
 import { AccountMeta, Connection, PublicKey, SystemProgram, TransactionSignature } from "@solana/web3.js";
-import { SolanaChallengeApplication } from '../../../target/types/solana_challenge_application';
+import { SolanaChallengeApplication } from './types/solana_challenge_application';
 import idl from '../idl/solana_challenge_application.json';
 import axios from 'axios';
 

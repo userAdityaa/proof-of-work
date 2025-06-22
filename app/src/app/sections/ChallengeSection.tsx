@@ -6,7 +6,7 @@ import { PublicKey } from "@solana/web3.js";
 import { createChallenge, deleteChallenge, getAllChallenge, getProvider, updateChallenge, submitChallenge, getAllSubmissionsForChallenge } from "../blockchain";
 import { BN } from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
-import { SolanaChallengeApplication } from "../../../../target/types/solana_challenge_application";
+import { SolanaChallengeApplication } from "../types/solana_challenge_application";
 import { takePartChallenge } from "../blockchain";
 import { acceptSubmission } from "../blockchain";
 import Lottie from "lottie-react";
