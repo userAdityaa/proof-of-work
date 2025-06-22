@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { poppins } from "@/constants/Font";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import { createChallenge, deleteChallenge, getAllChallenge, getProvider, updateChallenge, submitChallenge, getAllSubmissionsForChallenge } from "../blockchain";
@@ -9,6 +9,13 @@ import { Program } from "@coral-xyz/anchor";
 import { SolanaChallengeApplication } from "../../../../target/types/solana_challenge_application";
 import { takePartChallenge } from "../blockchain";
 import { acceptSubmission } from "../blockchain";
+import Lottie from "lottie-react";
+import loaderAnimation from "../../../public/loader.json";
+import CreateChallengePopover from "../popovers/ChallengeSection/CreateChallengePopover";
+import UpdateChallengePopover from "../popovers/ChallengeSection/UpdateChallengePopover";
+import SubmitProofPopover from "../popovers/ChallengeSection/SubmitProofPopover";
+import ViewSubmissionsPopover from "../popovers/ChallengeSection/ViewSubmissionPopover";
+import DailyChallengePopover from "../popovers/ChallengeSection/DailyChallengePopover";
 
 interface Challenge {
   publicKey: PublicKey;
@@ -31,11 +38,9 @@ interface Submission {
   publicKey: PublicKey;
   participant: PublicKey;
   proofUrl: string;
-  // Add other fields as needed based on participantSubmission account structure
 }
 
 const MAX_PARTICIPANTS = 100;
-const CARDS_PER_PAGE = 3;
 const ADMIN_WALLET = new PublicKey("8kw5GFcBTxdbQrDkf4jdHHiPvyG1bFPL9n9bWqPgGuYx");
 
 export default function ChallengeSection() {
@@ -71,7 +76,8 @@ export default function ChallengeSection() {
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [filter, setFilter] = useState<"open" | "participated" | "created">("open");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(0);
+  // const [currentPage, setCurrentPage] = useState(0);
+  const cardContainerRef = useRef<HTMLDivElement>(null);
 
   const program = useMemo(() => {
     return getProvider(publicKey, sendTransaction, signTransaction);
@@ -163,7 +169,6 @@ export default function ChallengeSection() {
           },
         }));
 
-      // Fetch submissions for each challenge and update submission status
       const submissionsMap = new Map<string, Submission[]>();
       const statusMap = new Map<string, boolean>();
       for (const challenge of transformedChallenges) {
@@ -184,7 +189,7 @@ export default function ChallengeSection() {
       setChallenges(transformedChallenges);
       setSubmissions(submissionsMap);
       setSubmissionStatus(statusMap);
-      setCurrentPage(0);
+      // setCurrentPage(0);
     } catch (err: any) {
       console.error("Fetch error:", err);
       setErrorMessage(`Failed to fetch challenges: ${err.message || "Unknown error"}`);
@@ -207,34 +212,6 @@ export default function ChallengeSection() {
       proofUrl: "",
     });
     setIsCreatePopoverOpen(true);
-  };
-
-  const handleCloseCreatePopover = () => {
-    setIsCreatePopoverOpen(false);
-    setFormErrors({ title: "", description: "", imageUrl: "", location: "", rewardType: "", rewardAmount: "", proofUrl: "" });
-  };
-
-  const handleCloseUpdatePopover = () => {
-    setIsUpdatePopoverOpen(false);
-    setCurrentChallenge(null);
-    setFormErrors({ title: "", description: "", imageUrl: "", location: "", rewardType: "", rewardAmount: "", proofUrl: "" });
-  };
-
-  const handleCloseDailyChallengePopover = () => {
-    setIsDailyChallengePopoverOpen(false);
-    setCurrentChallenge(null);
-  };
-
-  const handleCloseSubmitProofPopover = () => {
-    setIsSubmitProofPopoverOpen(false);
-    setCurrentChallenge(null);
-    setFormData((prev) => ({ ...prev, proofUrl: "" }));
-    setFormErrors((prev) => ({ ...prev, proofUrl: "" }));
-  };
-
-  const handleCloseViewSubmissionsPopover = () => {
-    setIsViewSubmissionsPopoverOpen(false);
-    setCurrentChallenge(null);
   };
 
   const handleSubmitCreate = async (e: React.FormEvent) => {
@@ -338,7 +315,6 @@ export default function ChallengeSection() {
     }
     try {
       setCurrentChallenge(challenge);
-      // submissions.get(challenge.publicKey.toString()) || [];
       setIsViewSubmissionsPopoverOpen(true);
     } catch (err: any) {
       console.error("Error viewing submissions:", err);
@@ -360,8 +336,8 @@ export default function ChallengeSection() {
         submission.participant,
       );
       console.log(`Submission accepted: ${tx}`);
-      await fetchChallenges(); // Refresh challenges and submissions
-      await handleViewSubmission(currentChallenge); // Refresh current submissions view
+      await fetchChallenges();
+      await handleViewSubmission(currentChallenge);
     } catch (err: any) {
       console.error("Error accepting submission:", err);
       setErrorMessage(`Failed to accept submission: ${err.message || "Unknown error"}`);
@@ -444,7 +420,7 @@ export default function ChallengeSection() {
       await fetchChallenges();
     } catch (err: any) {
       console.error("Error deleting challenge:", err);
-      setErrorMessage(`Failed to delete challenge: ${err.message || "Unknown error"}`);
+      throw err;
     }
   };
 
@@ -473,14 +449,20 @@ export default function ChallengeSection() {
   };
 
   const handleNextPage = () => {
-    if ((currentPage + 1) * CARDS_PER_PAGE < filteredChallenges.length) {
-      setCurrentPage(currentPage + 1);
+    if (cardContainerRef.current) {
+      cardContainerRef.current.scrollBy({
+        left: cardContainerRef.current.offsetWidth,
+        behavior: 'smooth'
+      });
     }
   };
 
   const handlePrevPage = () => {
-    if (currentPage > 0) {
-      setCurrentPage(currentPage - 1);
+    if (cardContainerRef.current) {
+      cardContainerRef.current.scrollBy({
+        left: -cardContainerRef.current.offsetWidth,
+        behavior: 'smooth'
+      });
     }
   };
 
@@ -523,11 +505,6 @@ export default function ChallengeSection() {
     }
   }, [challenges, filter, publicKey]);
 
-  const displayedChallenges = useMemo(() => {
-    const start = currentPage * CARDS_PER_PAGE;
-    return filteredChallenges.slice(start, start + CARDS_PER_PAGE);
-  }, [filteredChallenges, currentPage]);
-
   const adminChallenges = useMemo(() => {
     if (!publicKey) {
       return challenges.filter(
@@ -541,48 +518,122 @@ export default function ChallengeSection() {
         !challenge.account.status.eq(new BN(3))
     );
   }, [challenges, publicKey]);
-  
+
   return (
-    <div className="relative h-screen w-full overflow-hidden">
+    <div className="relative min-h-screen w-full overflow-hidden">
       <Image
         src="/challenge_section.png"
         alt="Landing Page Background"
         fill
-        className="object-fill"
+        className="object-fill hidden md:block scale-[115%] min-[1500]:scale-[105%]"
         priority
       />
 
-      <div className="absolute top-18 left-1/2 transform -translate-x-1/2 z-10">
-        <h1 className={`text-[#5B1B63] text-6xl font-bold ${poppins.className}`}>
-          Challenges
-        </h1>
-      </div>
+      <Image
+        src="/challenge_section_phone.png"
+        alt="Landing Page Background"
+        fill
+        className="object-cover md:hidden"
+        priority
+      />
 
       {/* Filter Buttons */}
-      <div className="absolute top-[10rem] left-1/2 transform -translate-x-1/2 flex space-x-4 z-10">
+      <div className="absolute top-4 max-md:top-[9.2rem] min-[1500]:top-[5rem] min-md:left-[49%] transform min-md:-translate-x-1/2 flex min-md:flex-wrap max-md:flex-nowrap justify-center items-center px-4 max-md:px-0 w-[85rem] max-md:w-[90vw] left-[5%]">
+        <div className="transition-transform duration-100 mb-0.5 min-md:-mr-[2rem] active:scale-95 hover:brightness-110 min-[1500]:w-[20rem] max-md:w-[9.5rem]" onClick={handleDailyChallengeClick}>
+          <Image
+            src="/daily_challenge_button.png"
+            alt="Daily Challenges Button"
+            width={108}
+            height={110}
+            className="object-contain min-[1500]:w-[20rem] max-md:w-[30rem]"
+          />
+        </div>
         <button
+          className={`transition-transform max-md:hidden duration-100 active:scale-95 hover:brightness-110 ${filter === "open" ? "opacity-100" : "opacity-70 "}`}
           onClick={() => setFilter("open")}
-          className={`px-4 py-2 rounded-xl ${filter === "open" ? "bg-[#FDD26B] text-[#5B1B63]" : "bg-white text-[#5B1B63]"} font-bold`}
+          aria-label="View Open Challenges"
         >
-          Open Challenges
+          <Image
+            src="/open_challenge_button.png"
+            alt="Open Challenges Button"
+            width={260}
+            height={240}
+            className="object-contain min-[1500]:w-[20rem]"
+          />
         </button>
+
+        <button
+          className={`transition-transform min-md:hidden duration-100 active:scale-95 hover:brightness-110 ${filter === "open" ? "opacity-100" : "opacity-70 "}`}
+          onClick={() => setFilter("open")}
+          aria-label="View Open Challenges"
+        >
+          <Image
+            src="/open_challenge_phone_button.png"
+            alt="Open Challenges Button"
+            width={108}
+            height={108}
+            className="object-contain min-[1500]:w-[20rem] max-md:w-[8rem]"
+          />
+        </button>
+
         <button
           onClick={() => setFilter("participated")}
-          className={`px-4 py-2 rounded-xl ${filter === "participated" ? "bg-[#FDD26B] text-[#5B1B63]" : "bg-white text-[#5B1B63]"} font-bold`}
+          className={`transition-transform mb-2 max-md:hidden duration-100 active:scale-95 hover:brightness-110 ${filter === "participated" ? "opacity-100" : "opacity-70"}`}
         >
-          Participated Challenges
+          <Image
+            src="/participated_challenge_button.png"
+            alt="Participated Challenges Button"
+            width={325}
+            height={240}
+            className="object-contain min-[1500]:w-[20rem]"
+          />
         </button>
+
+        <button
+          onClick={() => setFilter("participated")}
+          className={`transition-transform min-md:hidden duration-100 active:scale-95 hover:brightness-110 ${filter === "participated" ? "opacity-100" : "opacity-70"}`}
+        >
+          <Image
+            src="/participated_challenge_phone_button.png"
+            alt="Open Challenges Button"
+            width={108}
+            height={108}
+            className="object-contain min-[1500]:w-[20rem] max-md:w-[8rem]"
+          />
+        </button>
+
         <button
           onClick={() => setFilter("created")}
-          className={`px-4 py-2 rounded-xl ${filter === "created" ? "bg-[#FDD26B] text-[#5B1B63]" : "bg-white text-[#5B1B63]"} font-bold`}
+          className={`transition-transform mb-2 duration-100 max-md:hidden active:scale-95 hover:brightness-110 ${filter === "created" ? 
+            "opacity-100" : "opacity-70"}`}
         >
-          Created Challenges
+          <Image
+            src="/created_challenge_button.png"
+            alt="Participated Challenges Button"
+            width={325}
+            height={240}
+            className="object-contain min-[1500]:w-[20rem]"
+          />
+        </button>
+
+        <button
+          onClick={() => setFilter("created")}
+          className={`transition-transform min-md:hidden duration-100 active:scale-95 hover:brightness-110 ${filter === "created" ? 
+            "opacity-100" : "opacity-70"}`}
+        >
+          <Image
+            src="/created_challenge_phone_button.png"
+            alt="Open Challenges Button"
+            width={108}
+            height={108}
+            className="object-contain min-[1500]:w-[20rem] max-md:w-[8rem]"
+          />
         </button>
       </div>
 
       {/* Error Message and Retry Button */}
       {errorMessage && (
-        <div className="absolute top-44 left-1/2 transform -translate-x-1/2 z-10 flex flex-col items-center">
+        <div className="absolute top-36 left-1/2 transform -translate-x-1/2 z-10 flex flex-col items-center px-4">
           <p className={`text-red-500 text-lg ${poppins.className}`}>{errorMessage}</p>
           <button
             onClick={() => fetchChallenges()}
@@ -594,582 +645,241 @@ export default function ChallengeSection() {
       )}
 
       {/* Challenge Cards */}
-      <div className="absolute top-[14rem] left-1/2 transform -translate-x-1/2 flex space-x-10 z-10 w-[68%]">
+      <div className="relative top-48 min-[1500]:top-80 w-[90%] max-[1500]:max-w-[1080px] min-[1500]:w-[1270px] min-[1500]:border mx-auto px-4 md:px-6 lg:px-16">
         {fetchLoading ? (
-          <p className={`text-[#5B1B63] text-lg ${poppins.className}`}>Loading challenges...</p>
-        ) : displayedChallenges.length > 0 ? (
-          displayedChallenges.map((challenge, index) => (
-            <div key={challenge.publicKey.toString()} className="relative flex-shrink-0 w-[30%] h-[20rem]">
-              <div
-                className="absolute inset-0 rounded-3xl"
-                style={{
-                  backgroundColor: "#FDD26B",
-                  transform: "translate(3px, 2.5px)",
-                }}
-              ></div>
-              <div className="relative z-10 bg-[#FFF4C4] rounded-3xl h-[320px] p-4 overflow-y-auto w-[99%] flex flex-col items-center border border-[#e9deabdb]">
-                <h3 className={`text-[#5B1B63] text-xl text-center font-bold ${poppins.className} w-[100%]`}>
-                  {challenge.account.title || "Untitled"}
-                </h3>
-                <Image src="/running_challenge.png" alt="running avatar" width={120} height={120} />
-                <p className="text-[#5B1B63] text-xl -mt-[1rem] font-md text-center">{challenge.account.description}</p>
-                <div className="flex items-center w-[88%] justify-between absolute bottom-[0.5rem]">
-                  <div className="flex items-center space-x-2">
-                    <Image src="/challenge_coin.png" alt="challenge coin" width={30} height={30} />
-                    <p className="text-[#5B1B63] text-sm">
-                      {(challenge.account.reward_amount.toNumber() / 1e9).toString()} SOL
-                    </p>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Image src="/challenge_person.png" alt="challenge person" width={30} height={30} />
-                    <p className="text-[#5B1B63] text-sm">
-                      {challenge.account.participant.length}
-                    </p>
+          <div className="flex justify-center items-center h-[26rem]">
+            <Lottie animationData={loaderAnimation} loop={true} style={{ width: 160, height: 160 }} />
+          </div>
+        ) : filteredChallenges.length > 0 ? (
+          <div className="relative">
+            <div 
+              ref={cardContainerRef}
+              className="grid grid-flow-col auto-cols-[minmax(280px,320px)] max-md:ml-[0.8rem] max-md:gap-8 min-[1500]:gap-16 max-[1500]:md:gap-10 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-4"
+              style={{ scrollSnapType: 'x mandatory' }}
+            >
+              {filteredChallenges.map((challenge) => (
+                <div 
+                  key={challenge.publicKey.toString()} 
+                  className="snap-start w-[300px] md:w-[300px] min-w-[280px] flex-shrink-0"
+                >
+                  <div className="relative">
+                    <div
+                      className="absolute inset-0 rounded-3xl h-[340px] md:h-[361px]"
+                      style={{
+                        backgroundColor: "#FDD26B",
+                        transform: "translate(3px, 2.5px)",
+                      }}
+                    ></div>
+                    <div className="relative z-10 bg-[#FFF4C4] rounded-3xl h-[340px] md:h-[360px] max-md:mt-[3rem] p-5 overflow-y-auto flex flex-col items-center border border-[#e9deabdb]">
+                      <h3 className={`text-[#5B1B63] text-xl md:text-2xl text-center font-bold ${poppins.className} w-full truncate`}>
+                        {challenge.account.title || "Untitled"}
+                      </h3>
+                      <Image 
+                        src="/running_challenge.png" 
+                        alt="running avatar" 
+                        width={140} 
+                        height={140} 
+                        className="object-contain"
+                      />
+                      <p className="text-[#5B1B63] text-base md:text-lg -mt-2 font-medium text-center line-clamp-3">
+                        {challenge.account.description}
+                      </p>
+                      <div className="flex items-center w-[90%] justify-between absolute bottom-3">
+                        <div className="flex items-center space-x-2">
+                          <Image src="/challenge_coin.png" alt="challenge coin" width={28} height={28} />
+                          <p className="text-[#5B1B63] text-sm md:text-base">
+                            {(challenge.account.reward_amount.toNumber() / 1e9).toString()} SOL
+                          </p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Image src="/challenge_person.png" alt="challenge person" width={28} height={28} />
+                          <p className="text-[#5B1B63] text-sm md:text-base">
+                            {challenge.account.participant.length}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex flex-col space-y-2 mt-2">
+                      {publicKey && challenge.account.owner.equals(publicKey) ? (
+                        challenge.account.participant.length === 0 ? (
+                          <>
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => handleUpdateChallenge(challenge)}
+                                className="w-64 py-2 bg-blue-500 text-white rounded-xl text-sm md:text-base font-bold disabled:opacity-50"
+                                disabled={loading}
+                              >
+                                Update
+                              </button>
+                              <button
+                                onClick={() => handleDeleteChallenge(challenge)}
+                                className="p-2 bg-red-500 text-white rounded-xl disabled:opacity-50"
+                                disabled={loading}
+                                title="Delete"
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="h-6 w-6"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M6 18L18 6M6 6l12 12"
+                                  />
+                                </svg>
+                            </button>
+                          </div>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => handleViewSubmission(challenge)}
+                            className="w-full py-2 bg-purple-500 text-white rounded-xl text-sm md:text-base font-medium"
+                            disabled={loading}
+                          >
+                            View Submission
+                          </button>
+                        )
+                      ) : publicKey && submissionStatus.get(challenge.publicKey.toString()) ? (
+                        <button
+                          className="w-full py-2 bg-gray-500 text-white rounded-xl text-sm md:text-base font-bold hover:bg-gray-600 transition"
+                          disabled={true}
+                        >
+                          Submitted
+                        </button>
+                      ) : publicKey && challenge.account.participant.some((participant) => participant.equals(publicKey)) ? (
+                        <button
+                          onClick={() => handleSubmitProof(challenge)}
+                          className="w-full py-2 bg-orange-500 text-white rounded-xl text-sm md:text-base font-bold hover:bg-orange-600 transition"
+                          disabled={loading}
+                        >
+                          Submit Proof
+                        </button>
+                      ) : publicKey && challenge.account.participant.length < MAX_PARTICIPANTS ? (
+                        <button
+                          onClick={() => handleTakePart(challenge)}
+                          className="w-full py-2 bg-green-600 text-white rounded-xl text-sm md:text-base font-bold"
+                          disabled={loading}
+                        >
+                          {loading ? "Processing..." : "Take Part"}
+                        </button>
+                      ) : null}
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="flex flex-col space-y-2 mt-2 w-[99%]">
-                {publicKey && challenge.account.owner.equals(publicKey) ? (
-                  challenge.account.participant.length === 0 ? (
-                    <>
-                      <button
-                        onClick={() => handleUpdateChallenge(challenge)}
-                        className="w-[102%] py-2 bg-blue-500 text-white rounded-xl text-sm font-bold"
-                        disabled={loading}
-                      >
-                        Update
-                      </button>
-                      <button
-                        onClick={() => handleDeleteChallenge(challenge)}
-                        className="w-[102%] py-2 bg-red-500 text-white rounded-xl text-sm font-bold"
-                        disabled={loading}
-                      >
-                        Delete
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      onClick={() => handleViewSubmission(challenge)}
-                      className="w-[102%] py-2 bg-purple-500 text-white rounded-xl text-sm font-md"
-                      disabled={loading}
-                    >
-                      View Submission
-                    </button>
-                  )
-                ) : publicKey && submissionStatus.get(challenge.publicKey.toString()) ? (
-                  <button
-                    className="w-[102%] py-2 bg-gray-500 text-white rounded-xl text-sm font-bold hover:bg-gray-600 transition"
-                    disabled={true}
-                  >
-                    Submitted
-                  </button>
-                ) : publicKey && challenge.account.participant.some((participant) => participant.equals(publicKey)) ? (
-                  <button
-                    onClick={() => handleSubmitProof(challenge)}
-                    className="w-[102%] py-2 bg-orange-500 text-white rounded-xl text-sm font-bold hover:bg-orange-600 transition"
-                    disabled={loading}
-                  >
-                    Submit Proof
-                  </button>
-                ) : publicKey && challenge.account.participant.length < MAX_PARTICIPANTS ? (
-                  <button
-                    onClick={() => handleTakePart(challenge)}
-                    className="w-[102%] py-2 bg-green-600 text-white rounded-xl text-sm font-bold"
-                    disabled={loading}
-                  >
-                    {loading ? "Processing..." : "Take Part"}
-                  </button>
-                ) : null}
-              </div>
-              {currentPage > 0 && index === 0 && (
+              ))}
+            </div>
+            {filteredChallenges.length > 1 && (
+              <>
                 <Image
                   src="/challenge_arrow.png"
                   alt="Left Arrow"
-                  width={50}
-                  height={30}
-                  className="absolute left-[-55px] top-1/2 transform -translate-y-1/2 z-10 cursor-pointer"
+                  width={56}
+                  height={24}
+                  className="absolute -left-[2rem] md:-left-[4rem] md:top-[40%] top-[50%] transform -translate-y-1/2 z-10 cursor-pointer hover:opacity-80"
                   onClick={handlePrevPage}
                 />
-              )}
-              {(currentPage + 1) * CARDS_PER_PAGE < filteredChallenges.length && index === displayedChallenges.length - 1 && (
                 <Image
                   src="/challenge_arrow.png"
                   alt="Right Arrow"
-                  width={50}
-                  height={30}
-                  className="absolute right-[-55px] top-1/2 transform -translate-y-1/2 rotate-180 z-10 cursor-pointer"
+                  width={56}
+                  height={24}
+                  className="absolute -right-[2rem] md:-right-[4rem] md:top-[40%] top-[50%] transform -translate-y-1/2 rotate-180 z-10 cursor-pointer hover:opacity-80"
                   onClick={handleNextPage}
                 />
-              )}
-            </div>
-          ))
+              </>
+            )}
+          </div>
         ) : (
-          <p className={`text-[#5B1B63] text-2xl text-center w-[100%] h-[20rem] font-bold flex flex-col justify-center ${poppins.className}`}>
+          <p className={`text-[#5B1B63] text-3xl text-center w-full py-16 h-[26rem] flex items-center justify-center font-bold ${poppins.className}`}>
             No challenges available for this filter.
           </p>
         )}
       </div>
 
       {/* Buttons Container */}
-      <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 flex space-x-4 z-50">
-        <div className="bg-[#FDD26B] rounded-2xl shadow-md h-[50px]" onClick={handleDailyChallengeClick}>
-          <div className="h-[50px] flex justify-center items-center w-[15rem]">
-            <Image
-              src="/daily_challenge_clock.png"
-              alt="Daily Challenge"
-              className="object-contain"
-              width={32}
-              height={32}
-            />
-            <span className={`text-[#5B1B63] text-xl font-bold ${poppins.className}`}>
-              Daily Challenge
-            </span>
-          </div>
-        </div>
+      <div className="absolute bottom-24 max-md:bottom-52 min-[1500]:bottom-60 left-1/2 transform -translate-x-1/2 flex max-md:w-[24rem] flex-wrap justify-center gap-4 z-50 px-4">
         <div
-          className="bg-[#FDD26B] rounded-2xl shadow-md h-[50px]"
+            className="bg-[#FFC949] rounded-xl h-12 min-[1500]:p-7 border-2 border-[#420E40] flex items-center justify-center max-md:w-[9.5rem] w-[12rem] min-[1500]:w-[22rem]"
           onClick={handleCreateChallengeClick}
         >
-          <div className="h-[50px] flex justify-center items-center w-[15rem]">
-            <Image
-              src="/create_challenge_icon.png"
-              alt="Create Challenge"
-              className="object-contain"
-              width={32}
-              height={32}
-            />
-            <span className={`text-[#5B1B63] text-xl font-bold ${poppins.className}`}>
-              Create Challenge
-            </span>
-          </div>
+          <span className={`text-black  text-lg max-md:text-[15.5px] font-bold ${poppins.className} min-[1500]:text-[30px]`}>
+            Create Challenge
+          </span>
         </div>
       </div>
 
-      {/* Create Challenge Popover */}
-      {isCreatePopoverOpen && (
-        <div
-          className="fixed inset-0 backdrop-blur bg-opacity-50 flex justify-center items-center z-50"
-          onClick={handleCloseCreatePopover}
-        >
-          <div
-            className="relative"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Image
-              src="/create_challenge_iframe.png"
-              alt="Create Challenge Frame"
-              width={800}
-              height={400}
-              className="object-contain"
-            />
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-[#5B1B63] w-[80%] overflow-y-auto max-h-[300px]">
-              <div className="relative">
-                <label className="block mb-1 font-bold text-xl">Title</label>
-                <input
-                  type="text"
-                  name="title"
-                  placeholder="Enter title (max 20 chars, optional)"
-                  value={formData.title}
-                  onChange={handleInputChange}
-                  className="w-full p-2 mb-1 rounded-xl bg-white text-[#5B1B63]"
-                  maxLength={20}
-                />
-                {formErrors.title && (
-                  <p className="text-red-500 text-sm">{formErrors.title}</p>
-                )}
-                <label className="block mb-1 font-bold text-xl">Description *</label>
-                <input
-                  type="text"
-                  name="description"
-                  placeholder="Enter description (max 256 chars)"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  className="w-full p-2 mb-1 rounded-xl bg-white text-[#5B1B63]"
-                  maxLength={256}
-                />
-                {formErrors.description && (
-                  <p className="text-red-500 text-sm">{formErrors.description}</p>
-                )}
-                <label className="block mb-1 font-bold text-xl">Image URL</label>
-                <input
-                  type="text"
-                  name="imageUrl"
-                  placeholder="Enter image URL (max 120 chars, optional)"
-                  value={formData.imageUrl}
-                  onChange={handleInputChange}
-                  className="w-full p-2 mb-1 rounded-xl bg-white text-[#5B1B63]"
-                  maxLength={120}
-                />
-                {formErrors.imageUrl && (
-                  <p className="text-red-500 text-sm">{formErrors.imageUrl}</p>
-                )}
-                <label className="block mb-1 font-bold text-xl">Location</label>
-                <input
-                  type="text"
-                  name="location"
-                  placeholder="Enter location (max 20 chars, optional)"
-                  value={formData.location}
-                  onChange={handleInputChange}
-                  className="w-full p-2 mb-1 rounded-xl bg-white text-[#5B1B63]"
-                  maxLength={20}
-                />
-                {formErrors.location && (
-                  <p className="text-red-500 text-sm">{formErrors.location}</p>
-                )}
-                <label className="block mb-1 font-bold text-xl">Reward Type *</label>
-                <input
-                  type="text"
-                  name="rewardType"
-                  placeholder="Enter reward type (0-255)"
-                  value={formData.rewardType}
-                  onChange={handleInputChange}
-                  className="w-full p-2 mb-1 rounded-xl bg-white text-[#5B1B63]"
-                />
-                {formErrors.rewardType && (
-                  <p className="text-red-500 text-sm">{formErrors.rewardType}</p>
-                )}
-                <label className="block mb-1 font-bold text-xl">Reward Amount *</label>
-                <input
-                  type="text"
-                  name="rewardAmount"
-                  placeholder="Enter reward amount"
-                  value={formData.rewardAmount}
-                  onChange={handleInputChange}
-                  className="w-full p-2 mb-1 rounded-xl bg-white text-[#5B1B63]"
-                />
-                {formErrors.rewardAmount && (
-                  <p className="text-red-500 text-sm">{formErrors.rewardAmount}</p>
-                )}
-              </div>
-            </div>
-            <button
-              onClick={handleSubmitCreate}
-              className="absolute bottom-36 left-1/2 transform -translate-x-1/2 w-[200px] bg-[#5B1B63] text-white p-2 rounded-xl"
-              disabled={loading}
-            >
-              {loading ? "Submitting..." : "Submit"}
-            </button>
-            {loading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
-                <span className="text-white">Creating Challenge...</span>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Popovers */}
+      <CreateChallengePopover
+        isOpen={isCreatePopoverOpen}
+        onClose={() => setIsCreatePopoverOpen(false)}
+        formData={formData}
+        formErrors={formErrors}
+        handleInputChange={handleInputChange}
+        handleSubmit={handleSubmitCreate}
+        loading={loading}
+      />
 
-      {/* Update Challenge Popover */}
-      {isUpdatePopoverOpen && (
-        <div
-          className="fixed inset-0 backdrop-blur bg-opacity-50 flex justify-center items-center z-50"
-          onClick={handleCloseUpdatePopover}
-        >
-          <div
-            className="relative"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Image
-              src="/update_challenge_iframe.png"
-              alt="Update Challenge Frame"
-              width={800}
-              height={400}
-              className="object-contain"
-            />
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-[#5B1B63] w-[80%] overflow-y-auto max-h-[300px]">
-              <div className="relative">
-                <label className="block mb-1 font-bold text-xl">Title</label>
-                <input
-                  type="text"
-                  name="title"
-                  placeholder="Enter title (max 20 chars, optional)"
-                  value={formData.title}
-                  onChange={handleInputChange}
-                  className="w-full p-2 mb-1 rounded-xl bg-white text-[#5B1B63]"
-                  maxLength={20}
-                />
-                {formErrors.title && (
-                  <p className="text-red-500 text-sm">{formErrors.title}</p>
-                )}
-                <label className="block mb-1 font-bold text-xl">Description *</label>
-                <input
-                  type="text"
-                  name="description"
-                  placeholder="Enter description (max 256 chars)"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  className="w-full p-2 mb-1 rounded-xl bg-white text-[#5B1B63]"
-                  maxLength={256}
-                />
-                {formErrors.description && (
-                  <p className="text-red-500 text-sm">{formErrors.description}</p>
-                )}
-                <label className="block mb-1 font-bold text-xl">Image URL</label>
-                <input
-                  type="text"
-                  name="imageUrl"
-                  placeholder="Enter image URL (max 120 chars, optional)"
-                  value={formData.imageUrl}
-                  onChange={handleInputChange}
-                  className="w-full p-2 mb-1 rounded-xl bg-white text-[#5B1B63]"
-                  maxLength={120}
-                />
-                {formErrors.imageUrl && (
-                  <p className="text-red-500 text-sm">{formErrors.imageUrl}</p>
-                )}
-                <label className="block mb-1 font-bold text-xl">Location</label>
-                <input
-                  type="text"
-                  name="location"
-                  placeholder="Enter location (max 20 chars, optional)"
-                  value={formData.location}
-                  onChange={handleInputChange}
-                  className="w-full p-2 mb-1 rounded-xl bg-white text-[#5B1B63]"
-                  maxLength={20}
-                />
-                {formErrors.location && (
-                  <p className="text-red-500 text-sm">{formErrors.location}</p>
-                )}
-                <label className="block mb-1 font-bold text-xl">Reward Type *</label>
-                <input
-                  type="text"
-                  name="rewardType"
-                  placeholder="Enter reward type (0-255)"
-                  value={formData.rewardType}
-                  onChange={handleInputChange}
-                  className="w-full p-2 mb-1 rounded-xl bg-white text-[#5B1B63]"
-                />
-                {formErrors.rewardType && (
-                  <p className="text-red-500 text-sm">{formErrors.rewardType}</p>
-                )}
-                <label className="block mb-1 font-bold text-xl">Reward Amount *</label>
-                <input
-                  type="text"
-                  name="rewardAmount"
-                  placeholder="Enter reward amount"
-                  value={formData.rewardAmount}
-                  onChange={handleInputChange}
-                  className="w-full p-2 mb-1 rounded-xl bg-white text-[#5B1B63]"
-                />
-                {formErrors.rewardAmount && (
-                  <p className="text-red-500 text-sm">{formErrors.rewardAmount}</p>
-                )}
-              </div>
-            </div>
-            <button
-              onClick={handleSubmitUpdate}
-              className="absolute bottom-36 left-1/2 transform -translate-x-1/2 w-[200px] bg-[#5B1B63] text-white p-2 rounded-xl"
-              disabled={loading}
-            >
-              {loading ? "Updating..." : "Update"}
-            </button>
-            {loading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
-                <span className="text-white">Updating Challenge...</span>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      <UpdateChallengePopover
+        isOpen={isUpdatePopoverOpen}
+        onClose={() => {
+          setIsUpdatePopoverOpen(false);
+          setCurrentChallenge(null);
+          setFormErrors({ title: "", description: "", imageUrl: "", location: "", rewardType: "", rewardAmount: "", proofUrl: "" });
+        }}
+        formData={formData}
+        formErrors={formErrors}
+        handleInputChange={handleInputChange}
+        handleSubmit={handleSubmitUpdate}
+        loading={loading}
+      />
 
-      {/* Submit Proof Popover */}
-      {isSubmitProofPopoverOpen && (
-        <div
-          className="fixed inset-0 backdrop-blur bg-opacity-50 flex justify-center items-center z-50"
-          onClick={handleCloseSubmitProofPopover}
-        >
-          <div
-            className="relative"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Image
-              src="/submit_proof_iframe.png"
-              alt="Submit Proof Frame"
-              width={800}
-              height={400}
-              className="object-contain"
-            />
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-[#5B1B63] w-[80%] overflow-y-auto max-h-[300px]">
-              <div className="relative">
-                <label className="block mb-1 font-bold text-xl">Proof URL *</label>
-                <input
-                  type="text"
-                  name="proofUrl"
-                  placeholder="Enter proof URL (e.g., https://example.com/proof)"
-                  value={formData.proofUrl}
-                  onChange={handleInputChange}
-                  className="w-full p-2 mb-1 rounded-xl bg-white text-[#5B1B63]"
-                  maxLength={120}
-                />
-                {formErrors.proofUrl && (
-                  <p className="text-red-500 text-sm">{formErrors.proofUrl}</p>
-                )}
-              </div>
-            </div>
-            <button
-              onClick={handleSubmitProofConfirm}
-              className="absolute bottom-36 left-1/2 transform -translate-x-1/2 w-[200px] bg-[#5B1B63] text-white p-2 rounded-xl"
-              disabled={loading}
-            >
-              {loading ? "Submitting..." : "Submit Proof"}
-            </button>
-            {loading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
-                <span className="text-white">Submitting Proof...</span>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      <SubmitProofPopover
+        isOpen={isSubmitProofPopoverOpen}
+        onClose={() => {
+          setIsSubmitProofPopoverOpen(false);
+          setCurrentChallenge(null);
+          setFormData((prev) => ({ ...prev, proofUrl: "" }));
+          setFormErrors((prev) => ({ ...prev, proofUrl: "" }));
+        }}
+        formData={formData}
+        formErrors={formErrors}
+        handleInputChange={handleInputChange}
+        handleSubmit={handleSubmitProofConfirm}
+        loading={loading}
+      />
 
-      {/* View Submissions Popover */}
-      {isViewSubmissionsPopoverOpen && (
-        <div
-          className="fixed inset-0 backdrop-blur bg-opacity-50 flex justify-center items-center z-50"
-          onClick={handleCloseViewSubmissionsPopover}
-        >
-          <div
-            className="relative"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Image
-              src="/view_submission_iframe.png"
-              alt="View Submissions Frame"
-              width={820}
-              height={400}
-              className="object-contain"
-            />
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[80%] overflow-y-auto max-h-[400px]">
-              {currentChallenge && (submissions.get(currentChallenge.publicKey.toString()) || []).length > 0 ? (
-                submissions.get(currentChallenge.publicKey.toString())!.map((submission) => (
-                  <div
-                    key={submission.publicKey.toString()}
-                    className="bg-[#FFF4C4] rounded-[1.5rem] p-6 mb-6 shadow-inner border border-[#e1c968] hover:shadow-xl transition-shadow duration-300"
-                  >
-                    <h3 className={`text-[#5B1B63] text-xl font-extrabold ${poppins.className} mb-2`}>
-                      Submission by {submission.participant.toString().slice(0, 8)}...
-                    </h3>
-                    <p className="text-[#5B1B63] text-base mb-4">
-                      Proof URL: <a href={submission.proofUrl} target="_blank" rel="noopener noreferrer" className="underline">{submission.proofUrl}</a>
-                    </p>
-                    <button
-                      onClick={() => handleAcceptSubmission(submission)}
-                      className="w-full py-3 rounded-xl bg-[#49c553] text-white text-base font-bold hover:bg-[#3db347] transition"
-                      disabled={loading}
-                    >
-                      {loading ? "Processing..." : "Accept"}
-                    </button>
-                  </div>
-                ))
-              ) : (
-                <p className={`text-[#5B1B63] text-lg ${poppins.className} text-center`}>No submissions for this challenge.</p>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <ViewSubmissionsPopover
+        isOpen={isViewSubmissionsPopoverOpen}
+        onClose={() => {
+          setIsViewSubmissionsPopoverOpen(false);
+          setCurrentChallenge(null);
+        }}
+        currentChallenge={currentChallenge}
+        submissions={submissions}
+        handleAcceptSubmission={handleAcceptSubmission}
+        loading={loading}
+      />
 
-      {/* Daily Challenge Popover */}
-      {isDailyChallengePopoverOpen && (
-        <div
-          className="fixed inset-0 backdrop-blur bg-opacity-50 flex justify-center items-center z-50"
-          onClick={handleCloseDailyChallengePopover}
-        >
-          <div
-            className="relative"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Image
-              src="/daily_challenge_iframe.png"
-              alt="Daily Challenge Frame"
-              width={820}
-              height={400}
-              className="object-contain"
-            />
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[80%] overflow-y-auto max-h-[400px]">
-              {adminChallenges.map((challenge) => (
-                <div
-                  key={challenge.publicKey.toString()}
-                  className="bg-[#FFF4C4] rounded-[1.5rem] p-6 mb-6 shadow-inner border border-[#e1c968] hover:shadow-xl transition-shadow duration-300"
-                >
-                  <h3 className={`text-[#5B1B63] text-xl font-extrabold ${poppins.className} mb-2`}>
-                    {challenge.account.title || "Untitled Daily Challenge"}
-                  </h3>
-                  <p className="text-[#5B1B63] text-base mb-4">{challenge.account.description}</p>
-                  <div className="flex justify-between items-center mb-4">
-                    <div className="flex items-center space-x-2">
-                      <Image src="/challenge_coin.png" alt="coin" width={30} height={30} />
-                      <p className="text-[#5B1B63] font-semibold text-sm">
-                        {(challenge.account.reward_amount.toNumber() / 1e9).toString()} SOL
-                      </p>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Image src="/challenge_person.png" alt="participants" width={30} height={30} />
-                      <p className="text-[#5B1B63] font-semibold text-sm">
-                        {challenge.account.participant.length} / {MAX_PARTICIPANTS}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="w-full bg-[#e9cf7b] h-6 rounded-full overflow-hidden mb-4">
-                    <div
-                      className="bg-[#49c553] h-6 rounded-full transition-all duration-300 text-white font-bold text-xs flex items-center justify-center"
-                      style={{ width: `${(challenge.account.participant.length / MAX_PARTICIPANTS) * 100}%` }}
-                    >
-                    </div>
-                  </div>
-                  {publicKey && !publicKey.equals(ADMIN_WALLET) && !challenge.account.participant.some((p) => p.equals(publicKey)) && challenge.account.participant.length < MAX_PARTICIPANTS && (
-                    <button
-                      onClick={() => handleTakePart(challenge)}
-                      className="w-full py-3 rounded-xl bg-[#FFA928] text-white text-lg font-bold shadow-md hover:bg-[#FF9A16] transition duration-300"
-                      disabled={loading}
-                    >
-                      {loading ? "Processing..." : "Claim"}
-                    </button>
-                  )}
-                  {publicKey && publicKey.equals(ADMIN_WALLET) && (
-                    <>
-                      {challenge.account.participant.length === 0 ? (
-                        <>
-                          <button
-                            onClick={() => handleUpdateChallenge(challenge)}
-                            className="w-full py-3 rounded-xl bg-[#4D9AF6] text-white text-base font-bold mb-3 hover:bg-[#3f8ae0] transition"
-                            disabled={loading}
-                          >
-                            Update
-                          </button>
-                          <button
-                            onClick={() => handleDeleteChallenge(challenge)}
-                            className="w-full py-3 rounded-xl bg-[#F25A5A] text-white text-base font-bold hover:bg-[#d94f4f] transition"
-                            disabled={loading}
-                          >
-                            Delete
-                          </button>
-                        </>
-                      ) : (
-                        <button
-                          onClick={() => handleViewSubmission(challenge)}
-                          className="w-full py-3 rounded-xl bg-[#9A56D1] text-white text-base font-medium hover:bg-[#8646c0] transition"
-                          disabled={loading}
-                        >
-                          View Submission
-                        </button>
-                      )}
-                    </>
-                  )}
-                  {publicKey && challenge.account.participant.some((p) => p.equals(publicKey)) && (
-                    <button
-                      onClick={() => handleSubmitProof(challenge)}
-                      className={`w-full py-3 rounded-xl ${submissionStatus.get(challenge.publicKey.toString()) ? "bg-gray-500" : "bg-orange-500"} text-white text-base font-bold hover:${submissionStatus.get(challenge.publicKey.toString()) ? "bg-gray-600" : "bg-orange-600"} transition`}
-                      disabled={loading || submissionStatus.get(challenge.publicKey.toString())}
-                    >
-                      {submissionStatus.get(challenge.publicKey.toString()) ? "Submitted" : "Submit Proof"}
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+      <DailyChallengePopover
+        isOpen={isDailyChallengePopoverOpen}
+        onClose={() => {
+          setIsDailyChallengePopoverOpen(false);
+          setCurrentChallenge(null);
+        }}
+        adminChallenges={adminChallenges}
+        publicKey={publicKey}
+        submissionStatus={submissionStatus}
+        handleTakePart={handleTakePart}
+        handleUpdateChallenge={handleUpdateChallenge}
+        handleDeleteChallenge={handleDeleteChallenge}
+        handleViewSubmission={handleViewSubmission}
+        handleSubmitProof={handleSubmitProof}
+        loading={loading}
+      />
     </div>
   );
 }

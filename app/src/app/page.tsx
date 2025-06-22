@@ -16,8 +16,8 @@ export default function Home() {
   const [showPopover, setShowPopover] = useState(false);
   const [showWalletPopover, setShowWalletPopover] = useState(false);
   const [characterIndex, setCharacterIndex] = useState(0);
-  const [isInLandingSection, setIsInLandingSection] = useState(true);
-  const [isSpinning, setIsSpinning] = useState(false); // New state for slot machine animation
+  const [currentSection, setCurrentSection] = useState("landing");
+  const [isSpinning, setIsSpinning] = useState(false);
   const setUserExists = useWalletStore((state) => state.setUserExists);
   const userExists = useWalletStore((state) => state.userExists);
 
@@ -28,23 +28,47 @@ export default function Home() {
   useEffect(() => {
     async function checkUserExistsOnChain() {
       if (program === null || publicKey === null) return;
-      const userProfile = await getUser(program, publicKey);
-      console.log("now check: ", userProfile);
-      if (userProfile.exists) {
-        setUserExists(true);
+      try {
+        const userProfile = await getUser(program, publicKey);
+        console.log("User profile check: ", userProfile);
+        if (userProfile?.exists) {
+          setUserExists(true);
+        }
+      } catch (error) {
+        console.error("Error checking user on chain:", error);
       }
     }
 
     checkUserExistsOnChain();
-  }, [program, publicKey, connected]);
+  }, [program, publicKey, connected, setUserExists]);
 
   useEffect(() => {
     const handleScroll = () => {
-      const isStillInLanding = window.scrollY < window.innerHeight * 0.9;
-      setIsInLandingSection(isStillInLanding);
+      const landingSection = document.getElementById("landing");
+      const challengesSection = document.getElementById("challenges");
+      const leaderboardSection = document.getElementById("leaderboard");
+      const scrollY = window.scrollY;
+      const windowHeight = window.innerHeight;
+
+      if (!landingSection || !challengesSection || !leaderboardSection) {
+        console.warn("One or more sections not found");
+        return;
+      }
+
+      const challengesTop = challengesSection.offsetTop;
+      const leaderboardTop = leaderboardSection.offsetTop;
+
+      if (scrollY < challengesTop - windowHeight * 0.1) {
+        setCurrentSection("landing");
+      } else if (scrollY >= challengesTop - windowHeight * 0.1 && scrollY < leaderboardTop - windowHeight * 0.1) {
+        setCurrentSection("challenges");
+      } else {
+        setCurrentSection("leaderboard");
+      }
     };
 
     window.addEventListener("scroll", handleScroll);
+    handleScroll(); // Initial check
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -54,6 +78,11 @@ export default function Home() {
     return "onchain";
   };
 
+  const getNavbarHeight = () => {
+    const navbar = document.querySelector("nav") || document.querySelector("header");
+    return navbar ? navbar.offsetHeight : 80;
+  };
+
   const handleButtonClick = () => {
     const status = getWalletStatus();
     if (status === "disconnected") {
@@ -61,13 +90,64 @@ export default function Home() {
     } else if (status === "connected") {
       setShowPopover(true);
     } else {
-      // Trigger slot machine animation before scrolling
       setIsSpinning(true);
       setTimeout(() => {
-        document.getElementById("challenges")?.scrollIntoView({ behavior: "smooth" });
+        const challengesSection = document.getElementById("challenges");
+        if (challengesSection) {
+          challengesSection.scrollIntoView({ behavior: "smooth", block: "start" });
+          window.scrollBy(0, -getNavbarHeight());
+        } else {
+          console.error("Challenges section not found");
+        }
         setIsSpinning(false);
-      }, 1000); // Duration of the slot machine animation
+      }, 1000);
     }
+  };
+
+  const handleDownArrowClick = () => {
+    setIsSpinning(true);
+    setTimeout(() => {
+      const challengesSection = document.getElementById("challenges");
+      const leaderboardSection = document.getElementById("leaderboard");
+
+      if (currentSection === "landing" && challengesSection) {
+        window.scrollTo({
+          top: challengesSection.offsetTop,
+          behavior: "smooth",
+        });
+      } else if (currentSection === "challenges" && leaderboardSection) {
+        window.scrollTo({
+          top: leaderboardSection.offsetTop,
+          behavior: "smooth",
+        });
+      } else {
+        console.error("Target section not found");
+      }
+      setIsSpinning(false);
+    }, 1000);
+  };
+
+  const handleTopArrowClick = () => {
+    setIsSpinning(true);
+    setTimeout(() => {
+      const landingSection = document.getElementById("landing");
+      const challengesSection = document.getElementById("challenges");
+
+      if (currentSection === "leaderboard" && challengesSection) {
+        window.scrollTo({
+          top: challengesSection.offsetTop,
+          behavior: "smooth",
+        });
+      } else if (currentSection === "challenges" && landingSection) {
+        window.scrollTo({
+          top: landingSection.offsetTop,
+          behavior: "smooth",
+        });
+      } else {
+        console.error("Target section not found");
+      }
+      setIsSpinning(false);
+    }, 1000);
   };
 
   const getButtonText = () => {
@@ -80,9 +160,9 @@ export default function Home() {
   };
 
   return (
-    <div className="w-full overflow-x-hidden">
+    <div className={`w-full overflow-x-hidden overflow-y-hidden ${isSpinning ? "slot-machine-spin" : ""}`}>
       {/* Landing Page Section */}
-      <section className={`relative h-screen w-full overflow-hidden ${isSpinning ? "slot-machine-spin" : ""}`}>
+      <section id="landing" className="relative h-screen w-full overflow-hidden">
         <Image
           src="/landing_page.png"
           alt="Landing Page Background"
@@ -94,21 +174,37 @@ export default function Home() {
         <div className="relative z-10">
           <Navbar />
 
-          <div className="flex flex-col items-center h-screen text-center w-[50%] max-md:w-[90%] mx-auto max-md:mt-[2rem]">
-            <h1 className={`text-[62px] text-[#5B1B63] leading-[80px] font-extrabold ${poppins.className} max-md:text-[3.2rem] max-md:font-bold max-md:leading-[3.5rem] max-md:w-[100%]`}>
+          <div className="flex flex-col items-center h-screen text-center w-[50%] max-md:w-[90%] mx-auto max-[1030]:mt-[5rem] max-md:mt-[2rem] min-[1500]:mt-[4.5rem]">
+            <h1 className={`text-[62px] text-[#5B1B63] leading-[80px] font-extrabold ${poppins.className} max-[1030]:text-[4.5rem] max-md:text-[3.2rem] max-md:font-bold max-md:leading-[3.5rem] max-[1030]:w-[50rem] max-md:w-[100%] min-[1500]:text-[5.5rem] min-[1500]:leading-[6rem]`}>
               Complete Real-World Challenges, Earn SOL
             </h1>
-            <p className={`mt-4 text-[#5B1B63] text-lg md:text-2xl ${pontano.className} max-md:text-[1.6rem] max-md:leading-[2rem]`}>
+            <p className={`mt-4 text-[#5B1B63] text-lg ${pontano.className} max-[1030]:text-[2.4rem] max-md:text-[1.6rem] max-md:leading-[2rem] min-[1500]:text-4xl`}>
               Post adventures, set completion periods, and reward participants with SOL.
             </p>
             <button
               onClick={handleButtonClick}
-              className="mt-6 bg-[#FFC949] border-[3px] border-[#420E40] text-black px-6 py-3 rounded-xl hover:bg-[#FFD866] transition max-md:text-xl max-md:font-semibold font-bold"
+              className="mt-6 bg-[#FFC949] border-[3px] border-[#420E40] text-black px-6 py-3 rounded-xl hover:bg-[#FFD866] transition max-[1030]:text-2xl max-md:text-xl max-md:font-semibold font-bold min-[1500]:text-2xl"
             >
               {getButtonText()}
             </button>
           </div>
         </div>
+
+        {/* Down Arrow Button - Hidden in Leaderboard */}
+        {currentSection !== "leaderboard" && (
+          <button
+            onClick={handleDownArrowClick}
+            className={`fixed -bottom-8 left-1/2 transform -translate-x-1/2 z-50 ${isSpinning ? "pointer-events-none" : ""}`}
+          >
+            <Image
+              src="/down_arrow_nav.png"
+              alt="Scroll to Next Section"
+              width={180}
+              height={180}
+              className="object-contain"
+            />
+          </button>
+        )}
 
         {showPopover && (
           <AvatarPopover
@@ -118,7 +214,7 @@ export default function Home() {
           />
         )}
 
-        {showWalletPopover && isInLandingSection && (
+        {showWalletPopover && currentSection === "landing" && (
           <WalletPopover onClose={() => setShowWalletPopover(false)} status={getWalletStatus()} />
         )}
 
@@ -148,8 +244,22 @@ export default function Home() {
         </button>
       </section>
 
-      <section id="challenges">
+      <section id="challenges" className="relative">
         <ChallengeSection />
+        {currentSection !== "landing" && (
+          <button
+            onClick={handleTopArrowClick}
+            className={`fixed -top-8 left-1/2 transform -translate-x-1/2 z-50 ${isSpinning ? "pointer-events-none" : ""}`}
+          >
+            <Image
+              src="/down_arrow_nav.png"
+              alt="Scroll to Previous Section"
+              width={180}
+              height={180}
+              className="object-contain transform rotate-180"
+            />
+          </button>
+        )}
       </section>
 
       <section id="leaderboard">
