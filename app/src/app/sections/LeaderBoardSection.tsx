@@ -182,7 +182,7 @@ export default function LeaderBoardSection() {
                       {index + 4}
                     </span>
                     <Image
-                      src="/avatar_one_frame.png"
+                      src={`${user.avatar_url}_frame.png`}
                       alt="avatar frame"
                       height={100}
                       width={70}

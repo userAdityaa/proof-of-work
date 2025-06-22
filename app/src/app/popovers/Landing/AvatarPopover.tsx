@@ -78,7 +78,7 @@ export const AvatarPopover = ({ onClose, characterIndex, setCharacterIndex }: Po
           ▶
         </button>
 
-        <div>
+        <div className="flex items-center justify-center">
           <Image
             src={character.avatar}
             alt="Character avatar"
@@ -88,7 +88,7 @@ export const AvatarPopover = ({ onClose, characterIndex, setCharacterIndex }: Po
           />
         </div>
 
-        <div className="-mt-[2rem]">
+        <div className="mt-[1rem]">
           <input
             type="text"
             value={username}

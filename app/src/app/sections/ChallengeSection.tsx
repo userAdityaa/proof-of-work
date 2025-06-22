@@ -40,7 +40,7 @@ interface Submission {
   proofUrl: string;
 }
 
-const MAX_PARTICIPANTS = 100;
+const MAX_PARTICIPANTS = 20;
 const ADMIN_WALLET = new PublicKey("8kw5GFcBTxdbQrDkf4jdHHiPvyG1bFPL9n9bWqPgGuYx");
 
 export default function ChallengeSection() {
@@ -53,6 +53,7 @@ export default function ChallengeSection() {
   const [currentChallenge, setCurrentChallenge] = useState<Challenge | null>(null);
   const [submissions, setSubmissions] = useState<Map<string, Submission[]>>(new Map());
   const [submissionStatus, setSubmissionStatus] = useState<Map<string, boolean>>(new Map());
+  const [criticalError, setCriticalError] = useState<Error | null>(null);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -78,6 +79,10 @@ export default function ChallengeSection() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   // const [currentPage, setCurrentPage] = useState(0);
   const cardContainerRef = useRef<HTMLDivElement>(null);
+
+  if (criticalError) {
+    throw criticalError; 
+  }
 
   const program = useMemo(() => {
     return getProvider(publicKey, sendTransaction, signTransaction);
@@ -228,7 +233,7 @@ export default function ChallengeSection() {
     setLoading(true);
 
     try {
-      const rewardAmount = new BN(parseFloat(formData.rewardAmount) * 1e9);
+      const rewardAmount = new BN(parseFloat(formData.rewardAmount));
 
       await createChallenge(
         program,
@@ -253,8 +258,8 @@ export default function ChallengeSection() {
       setIsCreatePopoverOpen(false);
       await fetchChallenges();
     } catch (err: any) {
-      console.error("Error creating challenge:", err);
       setFormErrors((prev) => ({ ...prev, description: `Failed to create challenge: ${err.message || "Unknown error"}` }));
+      setCriticalError(err);
     } finally {
       setLoading(false);
     }

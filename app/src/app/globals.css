@@ -46,21 +46,3 @@ body {
     filter: blur(0);
   }
 }
-
-.custom-button {
-  background: linear-gradient(to bottom, #ffdd3c, #f4a300);
-  color: #6b2c00;
-  font-weight: bold;
-  font-size: 24px;
-  border: none;
-  border-radius: 12px;
-  padding: 14px 24px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-  cursor: pointer;
-  font-family: "Segoe UI", sans-serif;
-  transition: transform 0.2s ease;
-}
-
-.custom-button:hover {
-  transform: scale(1.05);
-}

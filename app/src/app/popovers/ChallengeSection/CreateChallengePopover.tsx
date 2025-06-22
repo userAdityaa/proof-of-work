@@ -147,7 +147,7 @@ export default function CreateChallengePopover({
           {loading ? "Submitting..." : "Submit"}
         </button>
         {loading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="absolute inset-0 flex items-center justify-center backdrop-blur bg-opacity-50">
             <Lottie animationData={loaderAnimation} loop={true} style={{ width: 160, height: 160 }} />
           </div>
         )}

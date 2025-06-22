@@ -43,35 +43,32 @@ export default function Home() {
   }, [program, publicKey, connected, setUserExists]);
 
   useEffect(() => {
-    // Disable manual scrolling by setting overflow: hidden on body
-    document.body.style.overflow = "hidden";
-
-    // Cleanup on component unmount
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, []);
-
-  useEffect(() => {
-    // Prevent default scroll behavior
+    // Prevent default scroll behavior for landing section only
+    const landingSection = document.getElementById("landing");
     const preventScroll = (e: any) => {
-      e.preventDefault();
-    };
-
-    window.addEventListener("wheel", preventScroll, { passive: false });
-    window.addEventListener("touchmove", preventScroll, { passive: false });
-    window.addEventListener("keydown", (e) => {
-      if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End"].includes(e.key)) {
+      if (currentSection === "landing") {
         e.preventDefault();
       }
-    });
+    };
+
+    if (landingSection) {
+      landingSection.addEventListener("wheel", preventScroll, { passive: false });
+      landingSection.addEventListener("touchmove", preventScroll, { passive: false });
+      landingSection.addEventListener("keydown", (e) => {
+        if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End"].includes(e.key) && currentSection === "landing") {
+          e.preventDefault();
+        }
+      });
+    }
 
     return () => {
-      window.removeEventListener("wheel", preventScroll);
-      window.removeEventListener("touchmove", preventScroll);
-      window.removeEventListener("keydown", preventScroll);
+      if (landingSection) {
+        landingSection.removeEventListener("wheel", preventScroll);
+        landingSection.removeEventListener("touchmove", preventScroll);
+        landingSection.removeEventListener("keydown", preventScroll);
+      }
     };
-  }, []);
+  }, [currentSection]);
 
   useEffect(() => {
     // Determine initial section on page load/refresh
@@ -119,7 +116,8 @@ export default function Home() {
   const handleButtonClick = () => {
     const status = getWalletStatus();
     if (status === "disconnected" || status === "connected" || !userExists) {
-      setShowWalletPopover(true);
+      if(status === "connected" && !userExists) setShowPopover(true);
+      else setShowWalletPopover(true);
     } else {
       setIsSpinning(true);
       setTimeout(() => {
@@ -211,7 +209,7 @@ export default function Home() {
   };
 
   return (
-    <div className={`w-full overflow-x-hidden overflow-y-hidden ${isSpinning ? "slot-machine-spin" : ""}`}>
+    <div className={`w-full overflow-x-hidden ${isSpinning ? "slot-machine-spin" : ""}`}>
       <style jsx>{`
         .slot-machine-spin {
           animation: slotMachine 1s ease-in-out;
