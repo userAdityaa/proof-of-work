@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter} from "next/font/google";
 import "./globals.css";
 import { SolanaProvider } from "@/provider/SolanaProvider";
+import { ErrorBoundary } from "./ErrorBoundary";
  
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,7 +22,9 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
+        <ErrorBoundary>
         <SolanaProvider>{children}</SolanaProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );
