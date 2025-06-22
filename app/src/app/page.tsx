@@ -43,33 +43,59 @@ export default function Home() {
   }, [program, publicKey, connected, setUserExists]);
 
   useEffect(() => {
-    const handleScroll = () => {
-      const landingSection = document.getElementById("landing");
-      const challengesSection = document.getElementById("challenges");
-      const leaderboardSection = document.getElementById("leaderboard");
-      const scrollY = window.scrollY;
-      const windowHeight = window.innerHeight;
+    // Disable manual scrolling by setting overflow: hidden on body
+    document.body.style.overflow = "hidden";
 
-      if (!landingSection || !challengesSection || !leaderboardSection) {
-        console.warn("One or more sections not found");
-        return;
+    // Cleanup on component unmount
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
+
+  useEffect(() => {
+    // Prevent default scroll behavior
+    const preventScroll = (e: any) => {
+      e.preventDefault();
+    };
+
+    window.addEventListener("wheel", preventScroll, { passive: false });
+    window.addEventListener("touchmove", preventScroll, { passive: false });
+    window.addEventListener("keydown", (e) => {
+      if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End"].includes(e.key)) {
+        e.preventDefault();
       }
+    });
 
-      const challengesTop = challengesSection.offsetTop;
-      const leaderboardTop = leaderboardSection.offsetTop;
+    return () => {
+      window.removeEventListener("wheel", preventScroll);
+      window.removeEventListener("touchmove", preventScroll);
+      window.removeEventListener("keydown", preventScroll);
+    };
+  }, []);
 
-      if (scrollY < challengesTop - windowHeight * 0.1) {
-        setCurrentSection("landing");
-      } else if (scrollY >= challengesTop - windowHeight * 0.1 && scrollY < leaderboardTop - windowHeight * 0.1) {
+  useEffect(() => {
+    // Determine initial section on page load/refresh
+    const determineInitialSection = () => {
+      const hash = window.location.hash;
+      if (hash === "#challenges") {
         setCurrentSection("challenges");
-      } else {
+        const challengesSection = document.getElementById("challenges");
+        if (challengesSection) {
+          window.scrollTo({ top: challengesSection.offsetTop, behavior: "instant" });
+        }
+      } else if (hash === "#leaderboard") {
         setCurrentSection("leaderboard");
+        const leaderboardSection = document.getElementById("leaderboard");
+        if (leaderboardSection) {
+          window.scrollTo({ top: leaderboardSection.offsetTop, behavior: "instant" });
+        }
+      } else {
+        setCurrentSection("landing");
+        window.scrollTo({ top: 0, behavior: "instant" });
       }
     };
 
-    window.addEventListener("scroll", handleScroll);
-    handleScroll(); // Initial check
-    return () => window.removeEventListener("scroll", handleScroll);
+    determineInitialSection();
   }, []);
 
   const getWalletStatus = () => {
@@ -94,8 +120,12 @@ export default function Home() {
       setTimeout(() => {
         const challengesSection = document.getElementById("challenges");
         if (challengesSection) {
-          challengesSection.scrollIntoView({ behavior: "smooth", block: "start" });
-          window.scrollBy(0, -getNavbarHeight());
+          window.scrollTo({
+            top: challengesSection.offsetTop - getNavbarHeight(),
+            behavior: "smooth",
+          });
+          setCurrentSection("challenges");
+          window.location.hash = "#challenges";
         } else {
           console.error("Challenges section not found");
         }
@@ -115,11 +145,15 @@ export default function Home() {
           top: challengesSection.offsetTop,
           behavior: "smooth",
         });
+        setCurrentSection("challenges");
+        window.location.hash = "#challenges";
       } else if (currentSection === "challenges" && leaderboardSection) {
         window.scrollTo({
           top: leaderboardSection.offsetTop,
           behavior: "smooth",
         });
+        setCurrentSection("leaderboard");
+        window.location.hash = "#leaderboard";
       } else {
         console.error("Target section not found");
       }
@@ -138,11 +172,15 @@ export default function Home() {
           top: challengesSection.offsetTop,
           behavior: "smooth",
         });
+        setCurrentSection("challenges");
+        window.location.hash = "#challenges";
       } else if (currentSection === "challenges" && landingSection) {
         window.scrollTo({
           top: landingSection.offsetTop,
           behavior: "smooth",
         });
+        setCurrentSection("landing");
+        window.location.hash = "";
       } else {
         console.error("Target section not found");
       }
@@ -161,6 +199,35 @@ export default function Home() {
 
   return (
     <div className={`w-full overflow-x-hidden overflow-y-hidden ${isSpinning ? "slot-machine-spin" : ""}`}>
+      <style jsx>{`
+        .slot-machine-spin {
+          animation: slotMachine 1s ease-in-out;
+        }
+
+        @keyframes slotMachine {
+          0% {
+            transform: translateY(0);
+            opacity: 1;
+          }
+          10% {
+            transform: translateY(-10px);
+            opacity: 0.8;
+          }
+          50% {
+            transform: translateY(20px);
+            opacity: 0.5;
+          }
+          90% {
+            transform: translateY(-10px);
+            opacity: 0.8;
+          }
+          100% {
+            transform: translateY(0);
+            opacity: 1;
+          }
+        }
+      `}</style>
+
       {/* Landing Page Section */}
       <section id="landing" className="relative h-screen w-full overflow-hidden">
         <Image
@@ -246,7 +313,7 @@ export default function Home() {
 
       <section id="challenges" className="relative">
         <ChallengeSection />
-        {currentSection !== "landing" && (
+        {(currentSection === "challenges" || currentSection === "leaderboard") && (
           <button
             onClick={handleTopArrowClick}
             className={`fixed -top-8 left-1/2 transform -translate-x-1/2 z-50 ${isSpinning ? "pointer-events-none" : ""}`}
@@ -262,7 +329,7 @@ export default function Home() {
         )}
       </section>
 
-      <section id="leaderboard">
+      <section id="leaderboard" className="relative">
         <LeaderBoardSection />
       </section>
     </div>
