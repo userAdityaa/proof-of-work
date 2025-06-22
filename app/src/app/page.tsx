@@ -77,6 +77,13 @@ export default function Home() {
     // Determine initial section on page load/refresh
     const determineInitialSection = () => {
       const hash = window.location.hash;
+      // If user doesn't exist, stay on landing section
+      if (!userExists) {
+        setCurrentSection("landing");
+        window.scrollTo({ top: 0, behavior: "instant" });
+        window.location.hash = "";
+        return;
+      }
       if (hash === "#challenges") {
         setCurrentSection("challenges");
         const challengesSection = document.getElementById("challenges");
@@ -96,7 +103,7 @@ export default function Home() {
     };
 
     determineInitialSection();
-  }, []);
+  }, [userExists]);
 
   const getWalletStatus = () => {
     if (!connected) return "disconnected";
@@ -111,10 +118,8 @@ export default function Home() {
 
   const handleButtonClick = () => {
     const status = getWalletStatus();
-    if (status === "disconnected") {
+    if (status === "disconnected" || status === "connected" || !userExists) {
       setShowWalletPopover(true);
-    } else if (status === "connected") {
-      setShowPopover(true);
     } else {
       setIsSpinning(true);
       setTimeout(() => {
@@ -135,6 +140,10 @@ export default function Home() {
   };
 
   const handleDownArrowClick = () => {
+    if (!userExists) {
+      setShowWalletPopover(true);
+      return;
+    }
     setIsSpinning(true);
     setTimeout(() => {
       const challengesSection = document.getElementById("challenges");
@@ -162,6 +171,10 @@ export default function Home() {
   };
 
   const handleTopArrowClick = () => {
+    if (!userExists) {
+      setShowWalletPopover(true);
+      return;
+    }
     setIsSpinning(true);
     setTimeout(() => {
       const landingSection = document.getElementById("landing");
@@ -288,7 +301,7 @@ export default function Home() {
         <button
           onClick={() => {
             const status = getWalletStatus();
-            if (status === "disconnected" || status === "connected" || status === "onchain") {
+            if (status === "disconnected" || status === "connected" || !userExists) {
               setShowWalletPopover(true);
             }
           }}
