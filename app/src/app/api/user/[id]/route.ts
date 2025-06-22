@@ -4,15 +4,17 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+type tParams = Promise<{ id: string }>;
+
 export async function PATCH(
   request: NextRequest, 
-  { params }: { params: { id: string } }
+  { params }: { params: tParams },
 ) {
   try {
     const { name, participant_score, creator_score } = await request.json();
     // Update user
     const user = await prisma.user.update({
-      where: { id: params.id },
+      where: { id: (await params).id },
       data: {
         name: name ?? undefined,
         participant_score: participant_score ?? undefined,
@@ -37,9 +39,9 @@ export async function PATCH(
 
 export async function GET(  
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: tParams }
 ) {
-  const id = params.id;
+  const id = (await params).id
 
   if (!id) {
     return NextResponse.json({ error: "Missing user id" }, { status: 400 });
