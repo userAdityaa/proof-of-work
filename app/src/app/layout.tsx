@@ -21,11 +21,11 @@ export default async function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <ErrorBoundary>
       <body className={inter.className}>
-        <ErrorBoundary>
         <SolanaProvider>{children}</SolanaProvider>
-        </ErrorBoundary>
       </body>
+      </ErrorBoundary>
     </html>
   );
 }

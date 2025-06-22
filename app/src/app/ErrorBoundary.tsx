@@ -25,12 +25,26 @@ export class ErrorBoundary extends Component<Props, State> {
     console.error("Uncaught error:", error, errorInfo);
   }
 
+  resetError = () => {
+    this.setState({ hasError: false, error: undefined });
+  };
+
   render() {
     if (this.state.hasError) {
       return (
-        <div className="relative w-[300px] h-[180px] bg-no-repeat bg-contain bg-center" style={{ backgroundImage: "url('/error_popover.png')" }}>
-          <div className="absolute top-6 w-full text-center px-4 text-white text-lg font-semibold drop-shadow-md">
-            Oops! Something went wrong.
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-white">
+          <div className="relative w-full max-w-lg mx-4">
+            <img src="/error_pop.png" alt="Error Popover" className="w-full h-auto scale-110" />
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-6 top-[12rem]">
+              <p className="text-gray-600 text-center text-lg font-mono font-bold p-2 rounded-md">
+                {this.state.error?.toString() || "An unexpected error occurred"}
+              </p>
+              <div
+                className="absolute top-[7rem] right-2 w-16 h-14 cursor-pointer"
+                onClick={this.resetError}
+                style={{ background: "transparent" }}
+              />
+            </div>
           </div>
         </div>
       );
