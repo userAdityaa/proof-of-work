@@ -214,7 +214,6 @@ export const getAllChallenge = async (
       ...account.account,
     }));
 
-    console.log("these are the challengs: ", challenges);
     return challenges;
   } catch (error) {
     console.error("Error fetching challenges:", error);

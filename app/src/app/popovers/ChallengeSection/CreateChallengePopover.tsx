@@ -53,11 +53,12 @@ export default function CreateChallengePopover({
         onClick={(e) => e.stopPropagation()}
       >
         <Image
-          src="/create_challenge_iframe.png"
+          src="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608215/my_images/create_challenge_iframe.webp"
           alt="Create Challenge Frame"
           width={800}
           height={400}
           className="object-contain w-full"
+          priority
         />
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-[#5B1B63] w-[80%] overflow-y-auto max-h-[300px] px-4">
           <div className="relative">

@@ -1,22 +1,49 @@
+"use client";
 import { createUser, getProvider } from "@/app/blockchain";
 import { characters } from "@/constants/Characters";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
+import Head from 'next/head';
+
+<Head>
+  <link
+    rel="preload"
+    as="image"
+    href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608235/my_images/first_avatar.webp"
+  />
+  <link
+    rel="preload"
+    as="image"
+    href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608611/my_images/second_avatar.webp"
+  />
+  <link
+    rel="preload"
+    as="image"
+    href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608631/my_images/third_avatar.webp"
+  />
+  <link
+    rel="preload"
+    as="image"
+    href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608241/my_images/fourth_avatar.webp"
+  />
+</Head>
 
 interface PopoverProps {
   onClose: () => void;
   characterIndex: number;
   setCharacterIndex: React.Dispatch<React.SetStateAction<number>>;
+  onAvatarSelected: () => void; // New prop to notify parent
 }
 
-export const AvatarPopover = ({ onClose, characterIndex, setCharacterIndex }: PopoverProps) => {
+export const AvatarPopover = ({ onClose, characterIndex, setCharacterIndex, onAvatarSelected }: PopoverProps) => {
   const { publicKey, sendTransaction, signTransaction } = useWallet();
   const character = characters[characterIndex];
   const program = useMemo(() => getProvider(publicKey, sendTransaction, signTransaction), [publicKey, signTransaction, sendTransaction]);
   const popoverRef = useRef(null);
   const [username, setUsername] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false); // New state for loader
 
   const nextCharacter = () => {
     setCharacterIndex((prev) => (prev + 1) % characters.length);
@@ -26,13 +53,26 @@ export const AvatarPopover = ({ onClose, characterIndex, setCharacterIndex }: Po
     setCharacterIndex((prev) => (prev - 1 + characters.length) % characters.length);
   };
 
-  function handleChoose() {
-    if (program === null || publicKey === null) return;
+  async function handleChoose() {
+    if (program === null || publicKey === null) {
+      setError("Wallet not connected");
+      return;
+    }
     if (!username.trim()) {
       setError("Please enter a username");
       return;
     }
-    createUser(program, publicKey, username, character.avatar);
+    setIsLoading(true); // Show loader
+    try {
+      await createUser(program, publicKey, username, character.avatar);
+      onAvatarSelected(); // Notify parent of success
+      onClose(); // Close popover
+    } catch (error) {
+      console.error("Error creating user:", error);
+      setError("Failed to create user. Please try again.");
+    } finally {
+      setIsLoading(false); // Hide loader
+    }
   }
 
   useEffect(() => {
@@ -60,6 +100,7 @@ export const AvatarPopover = ({ onClose, characterIndex, setCharacterIndex }: Po
         <button
           onClick={onClose}
           className="absolute top-2 right-2 text-[#5B1B63] text-3xl font-extrabold hover:scale-110 transition"
+          disabled={isLoading}
         >
           ✕
         </button>
@@ -67,6 +108,7 @@ export const AvatarPopover = ({ onClose, characterIndex, setCharacterIndex }: Po
         <button
           onClick={prevCharacter}
           className="absolute left-2 top-1/2 transform -translate-y-1/2 text-4xl text-[#5B1B63] hover:scale-110 transition"
+          disabled={isLoading}
         >
           ◀
         </button>
@@ -74,6 +116,7 @@ export const AvatarPopover = ({ onClose, characterIndex, setCharacterIndex }: Po
         <button
           onClick={nextCharacter}
           className="absolute right-2 top-1/2 transform -translate-y-1/2 text-4xl text-[#5B1B63] hover:scale-110 transition"
+          disabled={isLoading}
         >
           ▶
         </button>
@@ -85,6 +128,7 @@ export const AvatarPopover = ({ onClose, characterIndex, setCharacterIndex }: Po
             width={300}
             height={300}
             className="mx-auto"
+            priority
           />
         </div>
 
@@ -98,6 +142,7 @@ export const AvatarPopover = ({ onClose, characterIndex, setCharacterIndex }: Po
             }}
             placeholder="Character Name"
             className="w-[40%] text-center p-3 border-2 border-[#5B1B63] rounded-lg text-black font-bold focus:outline-none focus:ring-2 focus:ring-[#FFC949]"
+            disabled={isLoading}
           />
           {error && <p className="text-red-500 mt-2">{error}</p>}
         </div>
@@ -115,18 +160,32 @@ export const AvatarPopover = ({ onClose, characterIndex, setCharacterIndex }: Po
         </div>
 
         <button
-          onClick={() => {
-            if (!username.trim()) {
-              setError("Please enter a username");
-              return;
-            }
-            onClose();
-            handleChoose();
-          }}
-          className="bg-[#FFC949] border-4 border-[#5B1B63] text-black font-bold py-2 px-6 rounded hover:bg-[#FFD866] transition w-full"
+          onClick={handleChoose}
+          className="bg-[#FFC949] border-4 border-[#5B1B63] text-black font-bold py-2 px-6 rounded hover:bg-[#FFD866] transition w-full flex items-center justify-center"
+          disabled={isLoading}
         >
-          CHOOSE
+          {isLoading ? (
+            <div className="loader"></div>
+          ) : (
+            "CHOOSE"
+          )}
         </button>
+
+        <style jsx>{`
+          .loader {
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #5B1B63;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+          }
+
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
       </div>
     </div>
   );

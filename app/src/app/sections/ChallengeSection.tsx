@@ -16,6 +16,83 @@ import UpdateChallengePopover from "../popovers/ChallengeSection/UpdateChallenge
 import SubmitProofPopover from "../popovers/ChallengeSection/SubmitProofPopover";
 import ViewSubmissionsPopover from "../popovers/ChallengeSection/ViewSubmissionPopover";
 import DailyChallengePopover from "../popovers/ChallengeSection/DailyChallengePopover";
+import Head from "next/head";
+
+<Head>
+  <link
+    rel="preload"
+    as="image"
+    href="https://res.cloudinary.com/dhkqyhdqu/image/upload/f_auto,q_auto,w_800/create_challenge_iframe.webp"
+  />
+  <link
+    rel="preload"
+    as="image"
+    href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608225/my_images/daily_challenge_iframe.webp"
+  />
+  <link
+    rel="preload"
+    as="image"
+    href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608650/my_images/view_submission_iframe.webp"
+  />
+  <link
+    rel="preload"
+    as="image"
+    href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608211/my_images/challenge_section.PNG.webp"
+  />
+  <link
+    rel="preload"
+    as="image"
+    href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608556/my_images/participated_challenge_button.webp"
+  />
+  <link
+    rel="preload"
+    as="image"
+    href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608553/my_images/open_challenge_phone_button.webp"
+  />
+
+  <link
+    rel="preload"
+    as="image"
+    href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608222/my_images/daily_challenge_button.webp"
+  />
+  <link
+    rel="preload"
+    as="image"
+    href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608218/my_images/created_challenge_phone_button.webp"
+  />
+  <link
+    rel="preload"
+    as="image"
+    href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608205/my_images/challenge_coin.webp"
+  />
+  <link
+    rel="preload"
+    as="image"
+    href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608209/my_images/challenge_person.webp"
+  />
+  <link
+    rel="preload"
+    as="image"
+    href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608558/my_images/participated_challenge_phone_button.webp"
+  />
+  <link
+    rel="preload"
+    as="image"
+    href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608213/my_images/challenge_section_phone.webp"
+  />
+  <link
+    rel="preload"
+    as="image"
+    href ="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750617443/ChatGPT_Image_Jun_21_2025_at_01_56_01_AM-Photoroom_wmko5f.webp"
+  />
+  <link
+    rel="preload"
+    as="image"
+    href ="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608201/my_images/challenge_arrow.webp"
+  />
+</Head>
+
+
 
 interface Challenge {
   publicKey: PublicKey;
@@ -188,6 +265,7 @@ export default function ChallengeSection() {
           console.error(`Error fetching submissions for challenge ${challenge.publicKey.toString()}:`, err);
           submissionsMap.set(challenge.publicKey.toString(), []);
           statusMap.set(challenge.publicKey.toString(), false);
+          setCriticalError(err)
         }
       }
 
@@ -196,11 +274,11 @@ export default function ChallengeSection() {
       setSubmissionStatus(statusMap);
       // setCurrentPage(0);
     } catch (err: any) {
-      console.error("Fetch error:", err);
       setErrorMessage(`Failed to fetch challenges: ${err.message || "Unknown error"}`);
       setChallenges([]);
       setSubmissions(new Map());
       setSubmissionStatus(new Map());
+      setCriticalError(err);
     } finally {
       setFetchLoading(false);
     }
@@ -308,6 +386,7 @@ export default function ChallengeSection() {
     } catch (err: any) {
       console.error("Error updating challenge:", err);
       setFormErrors((prev) => ({ ...prev, description: `Failed to update challenge: ${err.message || "Unknown error"}` }));
+      setCriticalError(err);
     } finally {
       setLoading(false);
     }
@@ -324,6 +403,7 @@ export default function ChallengeSection() {
     } catch (err: any) {
       console.error("Error viewing submissions:", err);
       setErrorMessage(`Failed to view submissions: ${err.message || "Unknown error"}`);
+      setCriticalError(err);
     }
   };
 
@@ -346,6 +426,7 @@ export default function ChallengeSection() {
     } catch (err: any) {
       console.error("Error accepting submission:", err);
       setErrorMessage(`Failed to accept submission: ${err.message || "Unknown error"}`);
+      setCriticalError(err);
     } finally {
       setLoading(false);
     }
@@ -390,6 +471,7 @@ export default function ChallengeSection() {
     } catch (err: any) {
       console.error("Error submitting proof:", err);
       setFormErrors((prev) => ({ ...prev, proofUrl: `Failed to submit proof: ${err.message || "Unknown error"}` }));
+      setCriticalError(err);
     } finally {
       setLoading(false);
     }
@@ -415,6 +497,7 @@ export default function ChallengeSection() {
     } catch (err: any) {
       console.error("Error preparing to update challenge:", err);
       setErrorMessage(`Failed to update challenge: ${err.message || "Unknown error"}`);
+      setCriticalError(err);
     }
   };
 
@@ -425,7 +508,7 @@ export default function ChallengeSection() {
       await fetchChallenges();
     } catch (err: any) {
       console.error("Error deleting challenge:", err);
-      throw err;
+      setCriticalError(err);
     }
   };
 
@@ -444,6 +527,7 @@ export default function ChallengeSection() {
     } catch (err: any) {
       console.error("Error taking part in challenge:", err);
       setErrorMessage(`Failed to take part: ${err.message || "Unknown error"}`);
+      setCriticalError(err);
     } finally {
       setLoading(false);
     }
@@ -527,7 +611,7 @@ export default function ChallengeSection() {
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
       <Image
-        src="/challenge_section.png"
+        src="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608211/my_images/challenge_section.PNG.webp"
         alt="Landing Page Background"
         fill
         className="object-fill hidden md:block scale-[115%] min-[1500]:scale-[105%]"
@@ -535,7 +619,7 @@ export default function ChallengeSection() {
       />
 
       <Image
-        src="/challenge_section_phone.png"
+        src="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608213/my_images/challenge_section_phone.webp"
         alt="Landing Page Background"
         fill
         className="object-cover md:hidden"
@@ -546,11 +630,12 @@ export default function ChallengeSection() {
       <div className="absolute top-4 max-md:top-[9.2rem] min-[1500]:top-[5rem] min-md:left-[49%] transform min-md:-translate-x-1/2 flex min-md:flex-wrap max-md:flex-nowrap justify-center items-center px-4 max-md:px-0 w-[85rem] max-md:w-[90vw] left-[5%]">
         <div className="transition-transform duration-100 mb-0.5 min-md:-mr-[2rem] active:scale-95 hover:brightness-110 min-[1500]:w-[20rem] max-md:w-[9.5rem]" onClick={handleDailyChallengeClick}>
           <Image
-            src="/daily_challenge_button.png"
+            src="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608222/my_images/daily_challenge_button.webp"
             alt="Daily Challenges Button"
             width={108}
             height={110}
             className="object-contain min-[1500]:w-[20rem] max-md:w-[30rem]"
+            priority
           />
         </div>
         <button
@@ -559,11 +644,12 @@ export default function ChallengeSection() {
           aria-label="View Open Challenges"
         >
           <Image
-            src="/open_challenge_button.png"
+            src="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750617443/ChatGPT_Image_Jun_21_2025_at_01_56_01_AM-Photoroom_wmko5f.webp"
             alt="Open Challenges Button"
             width={260}
             height={240}
             className="object-contain min-[1500]:w-[20rem]"
+            priority
           />
         </button>
 
@@ -573,11 +659,12 @@ export default function ChallengeSection() {
           aria-label="View Open Challenges"
         >
           <Image
-            src="/open_challenge_phone_button.png"
+            src="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608553/my_images/open_challenge_phone_button.webp"
             alt="Open Challenges Button"
             width={108}
             height={108}
             className="object-contain min-[1500]:w-[20rem] max-md:w-[8rem]"
+            priority
           />
         </button>
 
@@ -586,11 +673,12 @@ export default function ChallengeSection() {
           className={`transition-transform mb-2 max-md:hidden duration-100 active:scale-95 hover:brightness-110 ${filter === "participated" ? "opacity-100" : "opacity-70"}`}
         >
           <Image
-            src="/participated_challenge_button.png"
+            src="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608556/my_images/participated_challenge_button.webp"
             alt="Participated Challenges Button"
             width={325}
             height={240}
             className="object-contain min-[1500]:w-[20rem]"
+            priority
           />
         </button>
 
@@ -599,11 +687,12 @@ export default function ChallengeSection() {
           className={`transition-transform min-md:hidden duration-100 active:scale-95 hover:brightness-110 ${filter === "participated" ? "opacity-100" : "opacity-70"}`}
         >
           <Image
-            src="/participated_challenge_phone_button.png"
+            src="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608558/my_images/participated_challenge_phone_button.webp"
             alt="Open Challenges Button"
             width={108}
             height={108}
             className="object-contain min-[1500]:w-[20rem] max-md:w-[8rem]"
+            priority
           />
         </button>
 
@@ -613,11 +702,12 @@ export default function ChallengeSection() {
             "opacity-100" : "opacity-70"}`}
         >
           <Image
-            src="/created_challenge_button.png"
+            src="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608217/my_images/created_challenge_button.webp"
             alt="Participated Challenges Button"
             width={325}
             height={240}
             className="object-contain min-[1500]:w-[20rem]"
+            priority
           />
         </button>
 
@@ -627,11 +717,12 @@ export default function ChallengeSection() {
             "opacity-100" : "opacity-70"}`}
         >
           <Image
-            src="/created_challenge_phone_button.png"
-            alt="Open Challenges Button"
+            src="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608218/my_images/created_challenge_phone_button.webp"
+            alt="Created Challenges Button"
             width={108}
             height={108}
             className="object-contain min-[1500]:w-[20rem] max-md:w-[8rem]"
+            priority
           />
         </button>
       </div>
@@ -691,13 +782,13 @@ export default function ChallengeSection() {
                       </p>
                       <div className="flex items-center w-[90%] justify-between absolute bottom-3">
                         <div className="flex items-center space-x-2">
-                          <Image src="/challenge_coin.png" alt="challenge coin" width={28} height={28} />
+                          <Image src="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608205/my_images/challenge_coin.webp" alt="challenge coin" width={28} height={28} priority/>
                           <p className="text-[#5B1B63] text-sm md:text-base">
                             {(challenge.account.reward_amount.toNumber() / 1e9).toString()} SOL
                           </p>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Image src="/challenge_person.png" alt="challenge person" width={28} height={28} />
+                          <Image src="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608209/my_images/challenge_person.webp" alt="challenge person" width={28} height={28} priority/>
                           <p className="text-[#5B1B63] text-sm md:text-base">
                             {challenge.account.participant.length}
                           </p>
@@ -780,20 +871,22 @@ export default function ChallengeSection() {
             {filteredChallenges.length > 1 && (
               <>
                 <Image
-                  src="/challenge_arrow.png"
+                  src="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608201/my_images/challenge_arrow.webp"
                   alt="Left Arrow"
                   width={56}
                   height={24}
                   className="absolute -left-[2rem] md:-left-[4rem] md:top-[40%] top-[50%] transform -translate-y-1/2 z-10 cursor-pointer hover:opacity-80"
                   onClick={handlePrevPage}
+                  priority
                 />
                 <Image
-                  src="/challenge_arrow.png"
+                  src="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608201/my_images/challenge_arrow.webp"
                   alt="Right Arrow"
                   width={56}
                   height={24}
                   className="absolute -right-[2rem] md:-right-[4rem] md:top-[40%] top-[50%] transform -translate-y-1/2 rotate-180 z-10 cursor-pointer hover:opacity-80"
                   onClick={handleNextPage}
+                  priority
                 />
               </>
             )}
@@ -808,7 +901,7 @@ export default function ChallengeSection() {
       {/* Buttons Container */}
       <div className="absolute bottom-24 max-md:bottom-52 min-[1500]:bottom-60 left-1/2 transform -translate-x-1/2 flex max-md:w-[24rem] flex-wrap justify-center gap-4 z-50 px-4">
         <div
-            className="bg-[#FFC949] rounded-xl h-12 min-[1500]:p-7 border-2 border-[#420E40] flex items-center justify-center max-md:w-[9.5rem] w-[12rem] min-[1500]:w-[22rem]"
+            className="textured-button border-[3px] border-[#420E40] text-black px-2 py-2 rounded-lg font-semibold flex items-center justify-center max-md:w-[9.5rem] w-[14rem] min-[1500]:w-[22rem]"
           onClick={handleCreateChallengeClick}
         >
           <span className={`text-black  text-lg max-md:text-[15.5px] font-bold ${poppins.className} min-[1500]:text-[30px]`}>

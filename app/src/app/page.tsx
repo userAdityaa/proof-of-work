@@ -10,16 +10,22 @@ import { WalletPopover } from "./popovers/Landing/WalletPopover";
 import { AvatarPopover } from "./popovers/Landing/AvatarPopover";
 import ChallengeSection from "./sections/ChallengeSection";
 import LeaderBoardSection from "./sections/LeaderBoardSection";
+import Head from 'next/head';
 
-export default function Home() {
+const Home = () => {
   const { connected, publicKey, sendTransaction, signTransaction } = useWallet();
   const [showPopover, setShowPopover] = useState(false);
   const [showWalletPopover, setShowWalletPopover] = useState(false);
   const [characterIndex, setCharacterIndex] = useState(0);
   const [currentSection, setCurrentSection] = useState("landing");
-  const [isSpinning, setIsSpinning] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
+  const [criticalError, setCriticalError] = useState<Error | null>(null);
   const setUserExists = useWalletStore((state) => state.setUserExists);
   const userExists = useWalletStore((state) => state.userExists);
+
+  if(criticalError) { 
+    throw criticalError;
+  }
 
   const program = useMemo(() => {
     return getProvider(publicKey, sendTransaction, signTransaction);
@@ -30,76 +36,65 @@ export default function Home() {
       if (program === null || publicKey === null) return;
       try {
         const userProfile = await getUser(program, publicKey);
-        console.log("User profile check: ", userProfile);
         if (userProfile?.exists) {
           setUserExists(true);
         }
-      } catch (error) {
-        console.error("Error checking user on chain:", error);
+      } catch (error: any) {
+        console.error("User doesn't exist.", error)
       }
     }
 
     checkUserExistsOnChain();
   }, [program, publicKey, connected, setUserExists]);
 
-  useEffect(() => {
-    // Prevent default scroll behavior for landing section only
-    const landingSection = document.getElementById("landing");
-    const preventScroll = (e: any) => {
-      if (currentSection === "landing") {
-        e.preventDefault();
-      }
-    };
+  // Navigate to section with smooth transition
+  const navigateToSection = (sectionId: string) => {
+    if (isNavigating) return; // Prevent multiple simultaneous navigations
+    
+    setIsNavigating(true);
+    setCurrentSection(sectionId);
+    
+    // Update URL hash
+    window.location.hash = sectionId === "landing" ? "" : `#${sectionId}`;
 
-    if (landingSection) {
-      landingSection.addEventListener("wheel", preventScroll, { passive: false });
-      landingSection.addEventListener("touchmove", preventScroll, { passive: false });
-      landingSection.addEventListener("keydown", (e) => {
-        if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End"].includes(e.key) && currentSection === "landing") {
-          e.preventDefault();
-        }
-      });
+    // Reset navigation state after animation
+    setTimeout(() => {
+      setIsNavigating(false);
+    }, 800);
+  };
+
+  // Handle navigation based on current section and direction
+  const handleDownNavigation = () => {
+    if (!userExists) {
+      setShowWalletPopover(true);
+      return;
     }
 
-    return () => {
-      if (landingSection) {
-        landingSection.removeEventListener("wheel", preventScroll);
-        landingSection.removeEventListener("touchmove", preventScroll);
-        landingSection.removeEventListener("keydown", preventScroll);
-      }
-    };
-  }, [currentSection]);
+    if (currentSection === "landing") {
+      navigateToSection("challenges");
+    } else if (currentSection === "challenges") {
+      navigateToSection("leaderboard");
+    }
+  };
 
+  const handleUpNavigation = () => {
+    if (!userExists) {
+      setShowWalletPopover(true);
+      return;
+    }
+
+    if (currentSection === "leaderboard") {
+      navigateToSection("challenges");
+    } else if (currentSection === "challenges") {
+      navigateToSection("landing");
+    }
+  };
+
+  // Handle initial section based on user status
   useEffect(() => {
-    // Determine initial section on page load/refresh
-    const determineInitialSection = () => {
-      const hash = window.location.hash;
-      // If user doesn't exist, stay on landing section
-      if (!userExists) {
-        setCurrentSection("landing");
-        window.scrollTo({ top: 0, behavior: "instant" });
-        window.location.hash = "";
-        return;
-      }
-      if (hash === "#challenges") {
-        setCurrentSection("challenges");
-        const challengesSection = document.getElementById("challenges");
-        if (challengesSection) {
-          window.scrollTo({ top: challengesSection.offsetTop, behavior: "instant" });
-        }
-      } else if (hash === "#leaderboard") {
-        setCurrentSection("leaderboard");
-        const leaderboardSection = document.getElementById("leaderboard");
-        if (leaderboardSection) {
-          window.scrollTo({ top: leaderboardSection.offsetTop, behavior: "instant" });
-        }
-      } else {
-        setCurrentSection("landing");
-        window.scrollTo({ top: 0, behavior: "instant" });
-      }
-    };
-
-    determineInitialSection();
+    if (!userExists) {
+      setCurrentSection("landing");
+    }
   }, [userExists]);
 
   const getWalletStatus = () => {
@@ -108,95 +103,14 @@ export default function Home() {
     return "onchain";
   };
 
-  const getNavbarHeight = () => {
-    const navbar = document.querySelector("nav") || document.querySelector("header");
-    return navbar ? navbar.offsetHeight : 80;
-  };
-
   const handleButtonClick = () => {
     const status = getWalletStatus();
     if (status === "disconnected" || status === "connected" || !userExists) {
       if(status === "connected" && !userExists) setShowPopover(true);
       else setShowWalletPopover(true);
     } else {
-      setIsSpinning(true);
-      setTimeout(() => {
-        const challengesSection = document.getElementById("challenges");
-        if (challengesSection) {
-          window.scrollTo({
-            top: challengesSection.offsetTop - getNavbarHeight(),
-            behavior: "smooth",
-          });
-          setCurrentSection("challenges");
-          window.location.hash = "#challenges";
-        } else {
-          console.error("Challenges section not found");
-        }
-        setIsSpinning(false);
-      }, 1000);
+      navigateToSection("challenges");
     }
-  };
-
-  const handleDownArrowClick = () => {
-    if (!userExists) {
-      setShowWalletPopover(true);
-      return;
-    }
-    setIsSpinning(true);
-    setTimeout(() => {
-      const challengesSection = document.getElementById("challenges");
-      const leaderboardSection = document.getElementById("leaderboard");
-
-      if (currentSection === "landing" && challengesSection) {
-        window.scrollTo({
-          top: challengesSection.offsetTop,
-          behavior: "smooth",
-        });
-        setCurrentSection("challenges");
-        window.location.hash = "#challenges";
-      } else if (currentSection === "challenges" && leaderboardSection) {
-        window.scrollTo({
-          top: leaderboardSection.offsetTop,
-          behavior: "smooth",
-        });
-        setCurrentSection("leaderboard");
-        window.location.hash = "#leaderboard";
-      } else {
-        console.error("Target section not found");
-      }
-      setIsSpinning(false);
-    }, 1000);
-  };
-
-  const handleTopArrowClick = () => {
-    if (!userExists) {
-      setShowWalletPopover(true);
-      return;
-    }
-    setIsSpinning(true);
-    setTimeout(() => {
-      const landingSection = document.getElementById("landing");
-      const challengesSection = document.getElementById("challenges");
-
-      if (currentSection === "leaderboard" && challengesSection) {
-        window.scrollTo({
-          top: challengesSection.offsetTop,
-          behavior: "smooth",
-        });
-        setCurrentSection("challenges");
-        window.location.hash = "#challenges";
-      } else if (currentSection === "challenges" && landingSection) {
-        window.scrollTo({
-          top: landingSection.offsetTop,
-          behavior: "smooth",
-        });
-        setCurrentSection("landing");
-        window.location.hash = "";
-      } else {
-        console.error("Target section not found");
-      }
-      setIsSpinning(false);
-    }, 1000);
   };
 
   const getButtonText = () => {
@@ -208,94 +122,170 @@ export default function Home() {
     }[status];
   };
 
+  const handleAvatarSelected = async () => {
+    // Called after successful avatar selection
+    if (program && publicKey) {
+      try {
+        const userProfile = await getUser(program, publicKey);
+        if (userProfile?.exists) {
+          setUserExists(true); 
+        }
+      } catch (error: any) {
+        console.error("Error checking user after avatar selection:", error);
+        setCriticalError(error);
+      }
+    }
+  };
+
+  // Determine which navigation arrows to show
+  const showDownArrow = currentSection === "landing" || currentSection === "challenges";
+  const showUpArrow = currentSection === "challenges" || currentSection === "leaderboard";
+
+  // Get transform style based on current section
+  const getTransformStyle = () => {
+    switch (currentSection) {
+      case "landing":
+        return "translateY(0)";
+      case "challenges":
+        return "translateY(-100vh)";
+      case "leaderboard":
+        return "translateY(-200vh)";
+      default:
+        return "translateY(0)";
+    }
+  };
+
   return (
-    <div className={`w-full overflow-x-hidden ${isSpinning ? "slot-machine-spin" : ""}`}>
-      <style jsx>{`
-        .slot-machine-spin {
-          animation: slotMachine 1s ease-in-out;
-        }
-
-        @keyframes slotMachine {
-          0% {
-            transform: translateY(0);
-            opacity: 1;
-          }
-          10% {
-            transform: translateY(-10px);
-            opacity: 0.8;
-          }
-          50% {
-            transform: translateY(20px);
-            opacity: 0.5;
-          }
-          90% {
-            transform: translateY(-10px);
-            opacity: 0.8;
-          }
-          100% {
-            transform: translateY(0);
-            opacity: 1;
-          }
-        }
-      `}</style>
-
-      {/* Landing Page Section */}
-      <section id="landing" className="relative h-screen w-full overflow-hidden">
-        <Image
-          src="/landing_page.png"
-          alt="Landing Page Background"
-          fill
-          className="object-cover"
-          priority
+    <>
+      <Head>
+        <link
+          rel="preload"
+          as="image"
+          href="https://res.cloudinary.com/dhkqyhdqu/image/upload/f_auto,q_auto/v1750609994/landing_page.webp"
         />
+        <link
+          rel="preload"
+          as="image"
+          href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750697593/txg57gqxt9eavo1dikso_ew2c4e.webp"
+        />
+        <link
+          rel="preload"
+          as="image"
+          href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750697840/leaderboard_section-1_tzg0l6.webp"
+        />
+        <link
+          rel="preload"
+          as="image"
+          href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608444/my_images/leader_board_one.webp"
+        />
+        <link
+          rel="preload"
+          as="image"
+          href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608227/my_images/down_arrow_nav.webp"
+        />
+        <link
+          rel="preload"
+          as="image"
+          href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608583/my_images/popover_mon.webp"
+        />
+        <link
+          rel="preload"
+          as="image"
+          href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608235/my_images/first_avatar.webp"
+        />
+        <link
+          rel="preload"
+          as="image"
+          href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608611/my_images/second_avatar.webp"
+        />
+        <link
+          rel="preload"
+          as="image"
+          href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608631/my_images/third_avatar.webp"
+        />
+        <link
+          rel="preload"
+          as="image"
+          href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608241/my_images/fourth_avatar.webp"
+        />
+        <link
+          rel="preload"
+          as="image"
+          href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608583/my_images/popover_mon.webp"
+        />
+      </Head>
 
-        <div className="relative z-10">
-          <Navbar />
+      <div className="w-full h-screen overflow-hidden">
+        {/* Container that holds all sections */}
+        <div 
+          className="w-full h-full transition-transform duration-800 ease-in-out"
+          style={{
+            transform: getTransformStyle(),
+            height: '300vh', // Total height for 3 sections
+          }}
+        >
+          {/* Landing Page Section */}
+          <section className="relative h-screen w-full overflow-hidden">
+            <Image
+              src="https://res.cloudinary.com/dhkqyhdqu/image/upload/f_auto,q_auto/v1750609994/landing_page.webp"
+              alt="Landing Page Background"
+              fill
+              className="object-cover"
+              priority
+            />
 
-          <div className="flex flex-col items-center h-screen text-center w-[50%] max-md:w-[90%] mx-auto max-[1030]:mt-[5rem] max-md:mt-[2rem] min-[1500]:mt-[4.5rem]">
-            <h1 className={`text-[62px] text-[#5B1B63] leading-[80px] font-extrabold ${poppins.className} max-[1030]:text-[4.5rem] max-md:text-[3.2rem] max-md:font-bold max-md:leading-[3.5rem] max-[1030]:w-[50rem] max-md:w-[100%] min-[1500]:text-[5.5rem] min-[1500]:leading-[6rem]`}>
-              Complete Real-World Challenges, Earn SOL
-            </h1>
-            <p className={`mt-4 text-[#5B1B63] text-lg ${pontano.className} max-[1030]:text-[2.4rem] max-md:text-[1.6rem] max-md:leading-[2rem] min-[1500]:text-4xl`}>
-              Post adventures, set completion periods, and reward participants with SOL.
-            </p>
-            <button
-              onClick={handleButtonClick}
-              className="mt-6 bg-[#FFC949] border-[3px] border-[#420E40] text-black px-6 py-3 rounded-xl hover:bg-[#FFD866] transition max-[1030]:text-2xl max-md:text-xl max-md:font-semibold font-bold min-[1500]:text-2xl"
-            >
-              {getButtonText()}
-            </button>
-          </div>
+            <div className="relative z-10">
+              {/* Navbar */}
+              <Navbar 
+                onSectionChange={(section) => {
+                  navigateToSection(section);
+                }}
+               />
+
+              {/* Main Header Text and Button */}
+              <div className="flex flex-col items-center h-screen text-center w-[50%] max-md:w-[90%] mx-auto max-[1030]:mt-[5rem] max-md:mt-[2rem] min-[1500]:mt-[4.5rem]">
+                <h1 className={`text-[62px] text-[#5B1B63] leading-[80px] font-extrabold ${poppins.className} max-[1030]:text-[4.5rem] max-md:text-[3.2rem] max-md:font-bold max-md:leading-[3.5rem] max-[1030]:w-[50rem] max-md:w-[100%] min-[1500]:text-[5.5rem] min-[1500]:leading-[6rem]`}>
+                  Complete Real-World Challenges, Earn SOL
+                </h1>
+                <p className={`mt-4 text-[#5B1B63] text-2xl ${pontano.className} max-[1030]:text-[2.4rem] max-md:text-[1.6rem] max-md:leading-[2rem] min-[1500]:text-4xl`}>
+                  Post adventures, set completion periods, and reward participants with SOL.
+                </p>
+                <button
+                  onClick={handleButtonClick}
+                  className={`mt-6 textured-button border-3 border-[#420E40] text-black px-4 py-3 rounded-lg font-bold ${poppins.className} max-[1030]:text-2xl max-md:text-xl max-md:font-semibold min-[1500]:text-2xl text-[1.15rem]`}
+                >
+                  {getButtonText()}
+                </button>
+              </div>
+            </div>
+          </section>
+
+          {/* Challenges Section */}
+          <section className="relative h-screen w-full">
+            <ChallengeSection />
+          </section>
+
+          {/* Leaderboard Section */}
+          <section className="relative h-screen w-full">
+            <LeaderBoardSection />
+          </section>
         </div>
 
-        {/* Down Arrow Button - Hidden in Leaderboard */}
-        {currentSection !== "leaderboard" && (
-          <button
-            onClick={handleDownArrowClick}
-            className={`fixed -bottom-8 left-1/2 transform -translate-x-1/2 z-50 ${isSpinning ? "pointer-events-none" : ""}`}
-          >
-            <Image
-              src="/down_arrow_nav.png"
-              alt="Scroll to Next Section"
-              width={180}
-              height={180}
-              className="object-contain"
-            />
-          </button>
-        )}
-
+        {/* Popover Components */}
         {showPopover && (
           <AvatarPopover
             onClose={() => setShowPopover(false)}
             characterIndex={characterIndex}
             setCharacterIndex={setCharacterIndex}
+            onAvatarSelected={handleAvatarSelected}
           />
         )}
 
-        {showWalletPopover && currentSection === "landing" && (
+        {showWalletPopover && (
           <WalletPopover onClose={() => setShowWalletPopover(false)} status={getWalletStatus()} />
         )}
 
+        {/* Fixed Wallet Button */}
         <button
           onClick={() => {
             const status = getWalletStatus();
@@ -306,11 +296,12 @@ export default function Home() {
           className="fixed bottom-6 right-6 bg-[#FFC949] border-4 border-[#5B1B63] text-black font-bold py-3 px-6 rounded-full hover:bg-[#FFD866] transition z-40 flex items-center gap-2"
         >
           <Image
-            src="/popover_mon.png"
+            src="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608583/my_images/popover_mon.webp"
             alt="Wallet mascot"
             width={24}
             height={24}
             className="object-contain"
+            priority
           />
           <div className="max-md:hidden">
             {getWalletStatus() === "disconnected"
@@ -320,29 +311,46 @@ export default function Home() {
               : "Scroll"}
           </div>
         </button>
-      </section>
 
-      <section id="challenges" className="relative">
-        <ChallengeSection />
-        {(currentSection === "challenges" || currentSection === "leaderboard") && (
+        {/* Navigation Arrows */}
+        {showDownArrow && (
           <button
-            onClick={handleTopArrowClick}
-            className={`fixed -top-8 left-1/2 transform -translate-x-1/2 z-50 ${isSpinning ? "pointer-events-none" : ""}`}
+            onClick={handleDownNavigation}
+            className={`fixed bottom-2 left-1/2 transform -translate-x-1/2 z-50 cursor-arrow-button transition-opacity duration-300 ${
+              isNavigating ? "pointer-events-none opacity-50" : "opacity-100"
+            }`}
           >
             <Image
-              src="/down_arrow_nav.png"
-              alt="Scroll to Previous Section"
-              width={180}
-              height={180}
-              className="object-contain transform rotate-180"
+              src="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608227/my_images/down_arrow_nav.webp"
+              alt="Navigate to Next Section"
+              width={150}
+              height={140}
+              className="object-contain hover:scale-110 transition-transform duration-300 -mb-[1.5rem]"
+              priority
             />
           </button>
         )}
-      </section>
 
-      <section id="leaderboard" className="relative">
-        <LeaderBoardSection />
-      </section>
-    </div>
+        {showUpArrow && (
+          <button
+            onClick={handleUpNavigation}
+            className={`fixed top-2 left-1/2 transform -translate-x-1/2 cursor-arrow-button z-50 transition-opacity duration-300 ${
+              isNavigating ? "pointer-events-none opacity-50" : "opacity-100"
+            }`}
+          >
+            <Image
+              src="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608227/my_images/down_arrow_nav.webp"
+              alt="Navigate to Previous Section"
+              width={150}
+              height={140}
+              className="object-contain transform rotate-180 hover:scale-110 transition-transform duration-300 -mt-[1.5rem]"
+              priority
+            />
+          </button>
+        )}
+      </div>
+    </>
   );
-}
+};
+
+export default Home;

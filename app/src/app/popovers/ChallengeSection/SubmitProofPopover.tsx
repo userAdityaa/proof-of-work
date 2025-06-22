@@ -1,6 +1,15 @@
 import Image from "next/image";
 import Lottie from "lottie-react";
 import loaderAnimation from "../../../../public/loader.json";
+import Head from "next/head";
+
+<Head>
+  <link
+    rel="preload"
+    as="image"
+    href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608627/my_images/submit_proof_iframe.webp"
+  />
+</Head>
 
 interface FormData {
   title: string;
@@ -53,11 +62,12 @@ export default function SubmitProofPopover({
         onClick={(e) => e.stopPropagation()}
       >
         <Image
-          src="/submit_proof_iframe.png"
+          src="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608627/my_images/submit_proof_iframe.webp"
           alt="Submit Proof Frame"
           width={800}
           height={400}
           className="object-contain w-full"
+          priority
         />
         <div className="absolute top-[45%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-[#5B1B63] w-[80%] overflow-y-auto max-h-[300px] px-4">
           <div className="relative">

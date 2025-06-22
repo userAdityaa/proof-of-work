@@ -61,11 +61,12 @@ export default function DailyChallengePopover({
         onClick={(e) => e.stopPropagation()}
       >
         <Image
-          src="/daily_challenge_iframe.png"
+          src="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608225/my_images/daily_challenge_iframe.webp"
           alt="Daily Challenge Frame"
           width={820}
           height={400}
           className="object-contain w-full"
+          priority
         />
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[80%] overflow-y-auto max-h-[400px] px-4">
           {adminChallenges.map((challenge) => (
@@ -79,7 +80,7 @@ export default function DailyChallengePopover({
               <p className="text-[#5B1B63] text-base mb-4">{challenge.account.description}</p>
               <div className="flex justify-between items-center mb-4">
                 <div className="flex items-center space-x-2">
-                  <Image src="/challenge_coin.png" alt="coin" width={24} height={24} />
+                  <Image src="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608205/my_images/challenge_coin.webp" alt="coin" width={24} height={24} priority/>
                   <p className="text-[#5B1B63] font-semibold text-sm">
                     {(challenge.account.reward_amount.toNumber() / 1e9).toString()} SOL
                   </p>

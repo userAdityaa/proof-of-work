@@ -54,11 +54,12 @@ export default function ViewSubmissionsPopover({
         onClick={(e) => e.stopPropagation()}
       >
         <Image
-          src="/view_submission_iframe.png"
+          src="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608650/my_images/view_submission_iframe.webp"
           alt="View Submissions Frame"
           width={820}
           height={400}
           className="object-contain w-full"
+          priority
         />
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[80%] overflow-y-auto max-h-[400px] px-4">
           {currentChallenge && (submissions.get(currentChallenge.publicKey.toString()) || []).length > 0 ? (
