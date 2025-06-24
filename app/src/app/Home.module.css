@@ -1,0 +1,36 @@
+/* Animation for down arrow: translate downward and fade out */
+@keyframes downArrowFade {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(20px); /* Move downward */
+    visibility: hidden; /* Ensure it doesn't remain clickable */
+  }
+}
+
+/* Animation for up arrow: translate upward and fade out */
+@keyframes upArrowFade {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-20px); /* Move upward */
+    visibility: hidden; /* Ensure it doesn't remain clickable */
+  }
+}
+
+/* Classes to apply animations */
+.downArrowFade {
+  animation: downArrowFade 0.3s ease-in-out forwards;
+  pointer-events: none; /* Disable interactions during animation */
+}
+
+.upArrowFade {
+  animation: upArrowFade 0.3s ease-in-out forwards;
+  pointer-events: none; /* Disable interactions during animation */
+}

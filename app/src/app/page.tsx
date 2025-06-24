@@ -11,6 +11,7 @@ import { AvatarPopover } from "./popovers/Landing/AvatarPopover";
 import ChallengeSection from "./sections/ChallengeSection";
 import LeaderBoardSection from "./sections/LeaderBoardSection";
 import Head from 'next/head';
+import styles from './Home.module.css';
 
 const Home = () => {
   const { connected, publicKey, sendTransaction, signTransaction } = useWallet();
@@ -20,6 +21,7 @@ const Home = () => {
   const [currentSection, setCurrentSection] = useState("landing");
   const [isNavigating, setIsNavigating] = useState(false);
   const [criticalError, setCriticalError] = useState<Error | null>(null);
+  const [isAnyPopoverOpen, setIsAnyPopoverOpen] = useState(false);
   const setUserExists = useWalletStore((state) => state.setUserExists);
   const userExists = useWalletStore((state) => state.userExists);
 
@@ -262,7 +264,7 @@ const Home = () => {
 
           {/* Challenges Section */}
           <section className="relative h-screen w-full">
-            <ChallengeSection />
+            <ChallengeSection setIsAnyPopoverOpen={setIsAnyPopoverOpen}/>
           </section>
 
           {/* Leaderboard Section */}
@@ -316,9 +318,9 @@ const Home = () => {
         {showDownArrow && (
           <button
             onClick={handleDownNavigation}
-            className={`fixed bottom-2 left-1/2 transform -translate-x-1/2 z-50 cursor-arrow-button transition-opacity duration-300 ${
+            className={`fixed bottom-2 left-1/2 transform -translate-x-1/2 cursor-arrow-button transition-opacity duration-300 ${
               isNavigating ? "pointer-events-none opacity-50" : "opacity-100"
-            }`}
+            } ${isAnyPopoverOpen ? styles.downArrowFade : ""}`} // Apply down arrow animation
           >
             <Image
               src="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608227/my_images/down_arrow_nav.webp"
@@ -334,9 +336,9 @@ const Home = () => {
         {showUpArrow && (
           <button
             onClick={handleUpNavigation}
-            className={`fixed top-2 left-1/2 transform -translate-x-1/2 cursor-arrow-button z-50 transition-opacity duration-300 ${
+            className={`fixed top-2 left-1/2 transform -translate-x-1/2 cursor-arrow-button transition-opacity duration-300 ${
               isNavigating ? "pointer-events-none opacity-50" : "opacity-100"
-            }`}
+            } ${isAnyPopoverOpen ? styles.upArrowFade : ""}`} // Apply up arrow animation
           >
             <Image
               src="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608227/my_images/down_arrow_nav.webp"

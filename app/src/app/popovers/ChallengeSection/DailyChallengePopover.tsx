@@ -53,7 +53,7 @@ export default function DailyChallengePopover({
 
   return (
     <div
-      className="fixed inset-0 backdrop-blur bg-opacity-50 flex justify-center items-center z-[999]"
+      className="fixed inset-0 backdrop-blur bg-opacity-50 flex justify-center items-center z-[99999]"
       onClick={onClose}
     >
       <div

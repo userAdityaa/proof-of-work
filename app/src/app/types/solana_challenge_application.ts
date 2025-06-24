@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/solana_challenge_application.json`.
  */
 export type SolanaChallengeApplication = {
-  "address": "GrSWdWyGJSnR8BMxLvaY1uhQa6VmskALWnNjEeyLPAK2",
+  "address": "4JtqnSvkAqUMKPyJ42goKuci2uodrQpaEsVcQGPX38ZD",
   "metadata": {
     "name": "solanaChallengeApplication",
     "version": "0.1.0",

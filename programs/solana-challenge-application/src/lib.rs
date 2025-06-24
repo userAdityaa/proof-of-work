@@ -9,7 +9,7 @@ pub mod user;
 
 use instructions::*;
 
-declare_id!("A2493TpNz5c5RNRTqxncKNJPhDxHeM4o7g7PE2QQuUzi");
+declare_id!("6jF9R3QAaMz6LUE7bAasMLUhLkmguthmYa98k2hQySM7");
 
 #[program]
 pub mod solana_challenge_application {

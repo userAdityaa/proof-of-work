@@ -18,82 +18,6 @@ import ViewSubmissionsPopover from "../popovers/ChallengeSection/ViewSubmissionP
 import DailyChallengePopover from "../popovers/ChallengeSection/DailyChallengePopover";
 import Head from "next/head";
 
-<Head>
-  <link
-    rel="preload"
-    as="image"
-    href="https://res.cloudinary.com/dhkqyhdqu/image/upload/f_auto,q_auto,w_800/create_challenge_iframe.webp"
-  />
-  <link
-    rel="preload"
-    as="image"
-    href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608225/my_images/daily_challenge_iframe.webp"
-  />
-  <link
-    rel="preload"
-    as="image"
-    href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608650/my_images/view_submission_iframe.webp"
-  />
-  <link
-    rel="preload"
-    as="image"
-    href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608211/my_images/challenge_section.PNG.webp"
-  />
-  <link
-    rel="preload"
-    as="image"
-    href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608556/my_images/participated_challenge_button.webp"
-  />
-  <link
-    rel="preload"
-    as="image"
-    href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608553/my_images/open_challenge_phone_button.webp"
-  />
-
-  <link
-    rel="preload"
-    as="image"
-    href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608222/my_images/daily_challenge_button.webp"
-  />
-  <link
-    rel="preload"
-    as="image"
-    href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608218/my_images/created_challenge_phone_button.webp"
-  />
-  <link
-    rel="preload"
-    as="image"
-    href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608205/my_images/challenge_coin.webp"
-  />
-  <link
-    rel="preload"
-    as="image"
-    href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608209/my_images/challenge_person.webp"
-  />
-  <link
-    rel="preload"
-    as="image"
-    href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608558/my_images/participated_challenge_phone_button.webp"
-  />
-  <link
-    rel="preload"
-    as="image"
-    href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608213/my_images/challenge_section_phone.webp"
-  />
-  <link
-    rel="preload"
-    as="image"
-    href ="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750617443/ChatGPT_Image_Jun_21_2025_at_01_56_01_AM-Photoroom_wmko5f.webp"
-  />
-  <link
-    rel="preload"
-    as="image"
-    href ="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608201/my_images/challenge_arrow.webp"
-  />
-</Head>
-
-
-
 interface Challenge {
   publicKey: PublicKey;
   account: {
@@ -117,10 +41,14 @@ interface Submission {
   proofUrl: string;
 }
 
+interface ChallengeSectionProps {
+  setIsAnyPopoverOpen: (isOpen: boolean) => void; // New prop to communicate popover state
+}
+
 const MAX_PARTICIPANTS = 20;
 const ADMIN_WALLET = new PublicKey("8kw5GFcBTxdbQrDkf4jdHHiPvyG1bFPL9n9bWqPgGuYx");
 
-export default function ChallengeSection() {
+export default function ChallengeSection({ setIsAnyPopoverOpen }: ChallengeSectionProps) {
   const { publicKey, sendTransaction, signTransaction } = useWallet();
   const [isCreatePopoverOpen, setIsCreatePopoverOpen] = useState(false);
   const [isUpdatePopoverOpen, setIsUpdatePopoverOpen] = useState(false);
@@ -154,16 +82,33 @@ export default function ChallengeSection() {
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [filter, setFilter] = useState<"open" | "participated" | "created">("open");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  // const [currentPage, setCurrentPage] = useState(0);
   const cardContainerRef = useRef<HTMLDivElement>(null);
 
   if (criticalError) {
-    throw criticalError; 
+    throw criticalError;
   }
 
   const program = useMemo(() => {
     return getProvider(publicKey, sendTransaction, signTransaction);
   }, [publicKey, sendTransaction, signTransaction]) as Program<SolanaChallengeApplication> | null;
+
+  // Update parent whenever any popover state changes
+  useEffect(() => {
+    const isAnyOpen =
+      isCreatePopoverOpen ||
+      isUpdatePopoverOpen ||
+      isDailyChallengePopoverOpen ||
+      isSubmitProofPopoverOpen ||
+      isViewSubmissionsPopoverOpen;
+    setIsAnyPopoverOpen(isAnyOpen);
+  }, [
+    isCreatePopoverOpen,
+    isUpdatePopoverOpen,
+    isDailyChallengePopoverOpen,
+    isSubmitProofPopoverOpen,
+    isViewSubmissionsPopoverOpen,
+    setIsAnyPopoverOpen,
+  ]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -265,14 +210,13 @@ export default function ChallengeSection() {
           console.error(`Error fetching submissions for challenge ${challenge.publicKey.toString()}:`, err);
           submissionsMap.set(challenge.publicKey.toString(), []);
           statusMap.set(challenge.publicKey.toString(), false);
-          setCriticalError(err)
+          setCriticalError(err);
         }
       }
 
       setChallenges(transformedChallenges);
       setSubmissions(submissionsMap);
       setSubmissionStatus(statusMap);
-      // setCurrentPage(0);
     } catch (err: any) {
       setErrorMessage(`Failed to fetch challenges: ${err.message || "Unknown error"}`);
       setChallenges([]);
@@ -610,6 +554,79 @@ export default function ChallengeSection() {
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
+      <Head>
+        <link
+          rel="preload"
+          as="image"
+          href="https://res.cloudinary.com/dhkqyhdqu/image/upload/f_auto,q_auto,w_800/create_challenge_iframe.webp"
+        />
+        <link
+          rel="preload"
+          as="image"
+          href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608225/my_images/daily_challenge_iframe.webp"
+        />
+        <link
+          rel="preload"
+          as="image"
+          href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608650/my_images/view_submission_iframe.webp"
+        />
+        <link
+          rel="preload"
+          as="image"
+          href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608211/my_images/challenge_section.PNG.webp"
+        />
+        <link
+          rel="preload"
+          as="image"
+          href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608556/my_images/participated_challenge_button.webp"
+        />
+        <link
+          rel="preload"
+          as="image"
+          href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608553/my_images/open_challenge_phone_button.webp"
+        />
+        <link
+          rel="preload"
+          as="image"
+          href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608222/my_images/daily_challenge_button.webp"
+        />
+        <link
+          rel="preload"
+          as="image"
+          href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608218/my_images/created_challenge_phone_button.webp"
+        />
+        <link
+          rel="preload"
+          as="image"
+          href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608205/my_images/challenge_coin.webp"
+        />
+        <link
+          rel="preload"
+          as="image"
+          href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608209/my_images/challenge_person.webp"
+        />
+        <link
+          rel="preload"
+          as="image"
+          href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608558/my_images/participated_challenge_phone_button.webp"
+        />
+        <link
+          rel="preload"
+          as="image"
+          href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608213/my_images/challenge_section_phone.webp"
+        />
+        <link
+          rel="preload"
+          as="image"
+          href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750617443/ChatGPT_Image_Jun_21_2025_at_01_56_01_AM-Photoroom_wmko5f.webp"
+        />
+        <link
+          rel="preload"
+          as="image"
+          href="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608201/my_images/challenge_arrow.webp"
+        />
+      </Head>
+
       <Image
         src="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608211/my_images/challenge_section.PNG.webp"
         alt="Landing Page Background"
@@ -698,8 +715,7 @@ export default function ChallengeSection() {
 
         <button
           onClick={() => setFilter("created")}
-          className={`transition-transform mb-2 duration-100 max-md:hidden active:scale-95 hover:brightness-110 ${filter === "created" ? 
-            "opacity-100" : "opacity-70"}`}
+          className={`transition-transform mb-2 duration-100 max-md-hidden active:scale-95 hover:brightness-110 ${filter === "created" ? "opacity-100" : "opacity-70"}`}
         >
           <Image
             src="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608217/my_images/created_challenge_button.webp"
@@ -710,21 +726,20 @@ export default function ChallengeSection() {
             priority
           />
         </button>
-
+{/* 
         <button
           onClick={() => setFilter("created")}
-          className={`transition-transform min-md:hidden duration-100 active:scale-95 hover:brightness-110 ${filter === "created" ? 
-            "opacity-100" : "opacity-70"}`}
+          className={`transition-transform min-md-hidden duration-100 active:scale-95 hover:brightness-110 ${filter === "created" ? "opacity-100" : "opacity-70"}`}
         >
           <Image
-            src="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608218/my_images/created_challenge_phone_button.webp"
+            src="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608218/my_images/created_chameleon_phone_button.webp"
             alt="Created Challenges Button"
             width={108}
             height={108}
             className="object-contain min-[1500]:w-[20rem] max-md:w-[8rem]"
             priority
           />
-        </button>
+        </button> */}
       </div>
 
       {/* Error Message and Retry Button */}
@@ -827,8 +842,8 @@ export default function ChallengeSection() {
                                     d="M6 18L18 6M6 6l12 12"
                                   />
                                 </svg>
-                            </button>
-                          </div>
+                              </button>
+                            </div>
                           </>
                         ) : (
                           <button
@@ -901,10 +916,10 @@ export default function ChallengeSection() {
       {/* Buttons Container */}
       <div className="absolute bottom-24 max-md:bottom-52 min-[1500]:bottom-60 left-1/2 transform -translate-x-1/2 flex max-md:w-[24rem] flex-wrap justify-center gap-4 z-50 px-4">
         <div
-            className="textured-button border-[3px] border-[#420E40] text-black px-2 py-2 rounded-lg font-semibold flex items-center justify-center max-md:w-[9.5rem] w-[14rem] min-[1500]:w-[22rem]"
+          className="textured-button border-[3px] border-[#420E40] text-black px-2 py-2 rounded-lg font-semibold flex items-center justify-center max-md:w-[9.5rem] w-[14rem] min-[1500]:w-[22rem]"
           onClick={handleCreateChallengeClick}
         >
-          <span className={`text-black  text-lg max-md:text-[15.5px] font-bold ${poppins.className} min-[1500]:text-[30px]`}>
+          <span className={`text-black text-lg max-md:text-[15.5px] font-bold ${poppins.className} min-[1500]:text-[30px]`}>
             Create Challenge
           </span>
         </div>
