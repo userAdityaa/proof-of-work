@@ -8,7 +8,7 @@
 <img width="1440" alt="Screenshot 2025-06-25 at 2 32 37 PM" src="https://github.com/user-attachments/assets/02379053-cc9a-4fb2-9b5d-055f7348c407" />
 
 ### About Section
-<img width="1440" alt="Screenshot 2025-06-25 at 2 33 32 PM" src="https://github.com/user-attachments/assets/2a6392e6-75a9-4f55-b1ea-0ec4ebceefc3" />
+<img width="1440" alt="Screenshot 2025-06-25 at 5 21 11 PM" src="https://github.com/user-attachments/assets/576ad703-9006-412a-9ef6-0c5cb44ba910" />
 
 ### Challenge section
 <img width="1440" alt="Screenshot 2025-06-25 at 12 29 23 PM" src="https://github.com/user-attachments/assets/8c3c3120-b788-4050-93ca-d2f33b1ef4d7" />
