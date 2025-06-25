@@ -1,4 +1,4 @@
-### Landinag page
+### Landing page
 <img width="1440" alt="Screenshot 2025-06-25 at 2 31 14 PM" src="https://github.com/user-attachments/assets/42c2d2e2-7e27-4281-ba44-226b8b222f76" />
 
 ### Choose Avatar Popover
