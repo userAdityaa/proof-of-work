@@ -786,7 +786,7 @@ export default function ChallengeSection({ setIsAnyPopoverOpen }: ChallengeSecti
                         {challenge.account.title || "Untitled"}
                       </h3>
                       <Image 
-                        src="/running_challenge.png" 
+                        src="https://res.cloudinary.com/dhkqyhdqu/image/upload/v1750608598/my_images/running_challenge.webp" 
                         alt="running avatar" 
                         width={140} 
                         height={140} 
