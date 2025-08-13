@@ -771,17 +771,17 @@ export default function ChallengeSection({ setIsAnyPopoverOpen }: ChallengeSecti
               {filteredChallenges.map((challenge) => (
                 <div 
                   key={challenge.publicKey.toString()} 
-                  className="snap-start w-[300px] md:w-[300px] min-w-[280px] flex-shrink-0"
+                  className="snap-start mt-[2.5rem] w-[300px] md:w-[300px] min-w-[280px] flex-shrink-0"
                 >
                   <div className="relative">
                     <div
-                      className="absolute inset-0 rounded-3xl h-[340px] md:h-[361px]"
+                      className="absolute inset-0 rounded-3xl h-[400px] md:h-[400px]"
                       style={{
                         backgroundColor: "#FDD26B",
                         transform: "translate(3px, 2.5px)",
                       }}
                     ></div>
-                    <div className="relative z-10 bg-[#FFF4C4] rounded-3xl h-[340px] md:h-[360px] max-md:mt-[3rem] p-5 overflow-y-auto flex flex-col items-center border border-[#e9deabdb]">
+                    <div className="relative z-10 bg-[#FFF4C4] rounded-3xl h-[340px] md:h-[400px] max-md:mt-[3rem] p-5 overflow-y-auto flex flex-col items-center border border-[#e9deabdb]">
                       <h3 className={`text-[#5B1B63] text-xl md:text-2xl text-center font-bold ${poppins.className} w-full truncate`}>
                         {challenge.account.title || "Untitled"}
                       </h3>
@@ -914,12 +914,12 @@ export default function ChallengeSection({ setIsAnyPopoverOpen }: ChallengeSecti
       </div>
 
       {/* Buttons Container */}
-      <div className="absolute bottom-24 max-md:bottom-52 min-[1500]:bottom-60 left-1/2 transform -translate-x-1/2 flex max-md:w-[24rem] flex-wrap justify-center gap-4 z-50 px-4">
+      <div className="absolute bottom-30 max-md:bottom-52 min-[1500]:bottom-60 left-1/2 transform -translate-x-1/2 flex max-md:w-[24rem] flex-wrap justify-center gap-4 z-50 px-4">
         <div
           className="textured-button border-[3px] border-[#420E40] text-black px-2 py-2 rounded-lg font-semibold flex items-center justify-center max-md:w-[9.5rem] w-[14rem] min-[1500]:w-[22rem]"
           onClick={handleCreateChallengeClick}
         >
-          <span className={`text-black text-lg max-md:text-[15.5px] font-bold ${poppins.className} min-[1500]:text-[30px]`}>
+          <span className={`text-black text-xl p-1 max-md:text-[15.5px] font-bold ${poppins.className} min-[1500]:text-[30px]`}>
             Create Challenge
           </span>
         </div>

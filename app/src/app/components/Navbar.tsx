@@ -44,7 +44,7 @@ export default function Navbar({ onSectionChange }: NavbarProps) {
               alt="Logo"
               width={250}
               height={250}
-              className="w-[250px] max-md:w-[165px] h-auto"
+              className="w-[250px] max-md:w[300px] h-auto"
               priority
             />
           </Link>

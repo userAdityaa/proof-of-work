@@ -245,7 +245,7 @@ const Home = () => {
                />
 
               {/* Main Header Text and Button */}
-              <div className="flex flex-col items-center mt-[5rem] h-screen text-center w-[60%] max-md:w-[90%] mx-auto max-[1030]:mt-[5rem] max-md:mt-[2rem] min-[1500]:mt-[4.5rem]">
+              <div className="flex flex-col items-center mt-[1.5rem] h-screen text-center w-[60%] max-md:w-[90%] mx-auto max-[1030]:mt-[5rem] max-md:mt-[2rem] min-[1500]:mt-[4.5rem]">
                 <h1 className={`text-[70px] text-[#5B1B63] leading-[80px] font-extrabold ${poppins.className} max-[1030]:text-[4.5rem] max-md:text-[3.2rem] max-md:font-bold max-md:leading-[3.5rem] max-[1030]:w-[50rem] max-md:w-[100%] min-[1500]:text-[5.5rem] min-[1500]:leading-[6rem]`}>
                   Complete Real-World Challenges, Earn SOL
                 </h1>
